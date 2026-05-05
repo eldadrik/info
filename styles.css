@@ -164,7 +164,7 @@ h2 {
 }
 
 .field-grid label,
-.font-grid label {
+.font-control > label:not(.bold-toggle) {
   display: grid;
   gap: 6px;
 }
@@ -243,10 +243,29 @@ button:focus-visible {
   margin-top: 12px;
 }
 
-.font-grid input {
+.font-grid input[type="number"] {
   direction: ltr;
   text-align: center;
   font-weight: 700;
+}
+
+.font-control {
+  display: grid;
+  gap: 7px;
+}
+
+.bold-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+  min-height: 24px;
+}
+
+.bold-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
 }
 
 table {

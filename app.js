@@ -5,16 +5,20 @@ const FONT_FAMILY = '"Heebo", Arial, "Noto Sans Hebrew", "Segoe UI", sans-serif'
 const TEXT_COLOR = "#231F20";
 const BAR_COLORS = ["#2381BE", "#40A1D9"];
 const FONT_WEIGHTS = {
-  title: 800,
-  subtitle: 400,
-  numbers: 800,
-  labels: 400,
+  regular: 400,
+  bold: 800,
 };
 const DEFAULT_FONT_SIZES = {
   title: 34,
   subtitle: 25,
   numbers: 24,
   labels: 18,
+};
+const DEFAULT_FONT_BOLD = {
+  title: true,
+  subtitle: false,
+  numbers: true,
+  labels: false,
 };
 
 const defaultParties = [
@@ -47,6 +51,7 @@ const state = {
     width: 1200,
     height: 620,
     fontSizes: { ...DEFAULT_FONT_SIZES },
+    fontBold: { ...DEFAULT_FONT_BOLD },
   },
 };
 
@@ -65,6 +70,10 @@ const els = {
   subtitleFontSizeInput: document.querySelector("#subtitleFontSizeInput"),
   numberFontSizeInput: document.querySelector("#numberFontSizeInput"),
   partyLabelFontSizeInput: document.querySelector("#partyLabelFontSizeInput"),
+  titleBoldInput: document.querySelector("#titleBoldInput"),
+  subtitleBoldInput: document.querySelector("#subtitleBoldInput"),
+  numberBoldInput: document.querySelector("#numberBoldInput"),
+  partyLabelBoldInput: document.querySelector("#partyLabelBoldInput"),
   sortToggle: document.querySelector("#sortToggle"),
   transparentToggle: document.querySelector("#transparentToggle"),
   addRowButton: document.querySelector("#addRowButton"),
@@ -594,6 +603,10 @@ function syncControls() {
   els.subtitleFontSizeInput.value = state.options.fontSizes.subtitle;
   els.numberFontSizeInput.value = state.options.fontSizes.numbers;
   els.partyLabelFontSizeInput.value = state.options.fontSizes.labels;
+  els.titleBoldInput.checked = state.options.fontBold.title;
+  els.subtitleBoldInput.checked = state.options.fontBold.subtitle;
+  els.numberBoldInput.checked = state.options.fontBold.numbers;
+  els.partyLabelBoldInput.checked = state.options.fontBold.labels;
   els.sortToggle.checked = state.options.sort;
   els.transparentToggle.checked = state.options.transparent;
 }
@@ -657,6 +670,12 @@ function renderChart() {
     subtitle: readFontSize(els.subtitleFontSizeInput, DEFAULT_FONT_SIZES.subtitle, 10, 72),
     numbers: readFontSize(els.numberFontSizeInput, DEFAULT_FONT_SIZES.numbers, 8, 72),
     labels: readFontSize(els.partyLabelFontSizeInput, DEFAULT_FONT_SIZES.labels, 8, 64),
+  };
+  state.options.fontBold = {
+    title: els.titleBoldInput.checked,
+    subtitle: els.subtitleBoldInput.checked,
+    numbers: els.numberBoldInput.checked,
+    labels: els.partyLabelBoldInput.checked,
   };
 
   const canvas = els.chartCanvas;
@@ -727,7 +746,7 @@ function renderChart() {
     width - 34 * scale,
     titleFontSize,
     Math.max(8, titleFontSize * 0.55),
-    FONT_WEIGHTS.title,
+    getTextWeight("title"),
   );
   const subtitle = state.meta.date ? `${state.meta.subtitle} (${state.meta.date})` : state.meta.subtitle;
   drawFittedText(
@@ -738,7 +757,7 @@ function renderChart() {
     width - 34 * scale,
     subtitleFontSize,
     Math.max(8, subtitleFontSize * 0.55),
-    FONT_WEIGHTS.subtitle,
+    getTextWeight("subtitle"),
   );
 
   if (!data.length) {
@@ -750,7 +769,7 @@ function renderChart() {
       width - 40,
       18 * scale,
       12 * scale,
-      FONT_WEIGHTS.title,
+      getTextWeight("title"),
     );
     updateSummary();
     return;
@@ -800,7 +819,7 @@ function renderChart() {
       Math.max(24 * scale, segment.width),
       valueFontSize,
       10 * scale,
-      FONT_WEIGHTS.numbers,
+      getTextWeight("numbers"),
     );
 
     drawPartyLabel(
@@ -902,7 +921,7 @@ function measureLabelMetrics(ctx, data, fontSize, scale) {
   const labelPadding = Math.max(18, 14 * scale);
   const minimumSegmentWidth = Math.max(42, 30 * scale);
 
-  ctx.font = `${FONT_WEIGHTS.labels} ${Math.max(8, Math.round(fontSize))}px ${FONT_FAMILY}`;
+  ctx.font = `${FONT_WEIGHTS.regular} ${Math.max(8, Math.round(fontSize))}px ${FONT_FAMILY}`;
 
   return data.map((party) => {
     const lines = getPartyLabelLines(party.name);
@@ -920,7 +939,7 @@ function getPartyLabelLines(label) {
 }
 
 function drawPartyLabel(ctx, label, centerX, firstLineY, fontSize, lineHeight) {
-  ctx.font = `${FONT_WEIGHTS.labels} ${Math.max(8, Math.round(fontSize))}px ${FONT_FAMILY}`;
+  ctx.font = `${getTextWeight("labels")} ${Math.max(8, Math.round(fontSize))}px ${FONT_FAMILY}`;
   ctx.fillStyle = TEXT_COLOR;
   getPartyLabelLines(label).forEach((line, index) => {
     ctx.fillText(line, centerX, firstLineY + index * lineHeight);
@@ -950,6 +969,10 @@ function readFontSize(input, fallback, min, max) {
     input.value = clamped;
   }
   return clamped;
+}
+
+function getTextWeight(key) {
+  return state.options.fontBold[key] ? FONT_WEIGHTS.bold : FONT_WEIGHTS.regular;
 }
 
 function setStatus(message, type = "") {
@@ -1054,7 +1077,14 @@ for (const input of [
   input.addEventListener("input", renderChart);
 }
 
-for (const input of [els.sortToggle, els.transparentToggle]) {
+for (const input of [
+  els.sortToggle,
+  els.transparentToggle,
+  els.titleBoldInput,
+  els.subtitleBoldInput,
+  els.numberBoldInput,
+  els.partyLabelBoldInput,
+]) {
   input.addEventListener("change", renderChart);
 }
 

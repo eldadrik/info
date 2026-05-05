@@ -75,22 +75,46 @@
           <section class="font-section" aria-labelledby="fontSectionTitle">
             <h2 id="fontSectionTitle">גדלי טקסט</h2>
             <div class="font-grid">
-              <label>
-                <span>כותרת ראשית</span>
-                <input id="titleFontSizeInput" type="number" min="12" max="96" step="1" />
-              </label>
-              <label>
-                <span>כותרת משנה</span>
-                <input id="subtitleFontSizeInput" type="number" min="10" max="72" step="1" />
-              </label>
-              <label>
-                <span>מספרי מנדטים</span>
-                <input id="numberFontSizeInput" type="number" min="8" max="72" step="1" />
-              </label>
-              <label>
-                <span>שמות מפלגות</span>
-                <input id="partyLabelFontSizeInput" type="number" min="8" max="64" step="1" />
-              </label>
+              <div class="font-control">
+                <label for="titleFontSizeInput">
+                  <span>כותרת ראשית</span>
+                  <input id="titleFontSizeInput" type="number" min="12" max="96" step="1" />
+                </label>
+                <label class="bold-toggle">
+                  <input id="titleBoldInput" type="checkbox" checked />
+                  <span>מודגש</span>
+                </label>
+              </div>
+              <div class="font-control">
+                <label for="subtitleFontSizeInput">
+                  <span>כותרת משנה</span>
+                  <input id="subtitleFontSizeInput" type="number" min="10" max="72" step="1" />
+                </label>
+                <label class="bold-toggle">
+                  <input id="subtitleBoldInput" type="checkbox" />
+                  <span>מודגש</span>
+                </label>
+              </div>
+              <div class="font-control">
+                <label for="numberFontSizeInput">
+                  <span>מספרי מנדטים</span>
+                  <input id="numberFontSizeInput" type="number" min="8" max="72" step="1" />
+                </label>
+                <label class="bold-toggle">
+                  <input id="numberBoldInput" type="checkbox" checked />
+                  <span>מודגש</span>
+                </label>
+              </div>
+              <div class="font-control">
+                <label for="partyLabelFontSizeInput">
+                  <span>שמות מפלגות</span>
+                  <input id="partyLabelFontSizeInput" type="number" min="8" max="64" step="1" />
+                </label>
+                <label class="bold-toggle">
+                  <input id="partyLabelBoldInput" type="checkbox" />
+                  <span>מודגש</span>
+                </label>
+              </div>
             </div>
           </section>
           <div class="table-shell">
