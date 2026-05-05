@@ -774,12 +774,13 @@ function renderChart() {
   const maxValue = Math.max(1, ...roundedValues);
   const chartHeight = barBase - chartTop;
   const valueGap = Math.max(10, DEFAULT_FONT_SIZES.numbers * 0.48);
+  const commonSegmentWidth = (width - sidePadding * 2) / data.length;
+  const barWidth = clamp(commonSegmentWidth * 0.38, 10 * scale, 32 * scale);
 
   data.forEach((party, index) => {
     const segment = labelLayout.segments[index];
     const value = roundedValues[index];
     const centerX = layoutStartX + segment.start + segment.width / 2;
-    const barWidth = clamp(segment.width * 0.32, 8 * scale, 27 * scale);
     const x = centerX - barWidth / 2;
     const barHeight = value ? (chartHeight * value) / maxValue : 0;
     const y = barBase - barHeight;
