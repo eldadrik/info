@@ -705,32 +705,6 @@ function renderChart() {
   let sidePadding = Math.max(16, 14 * scale);
   let labelMetrics = data.length ? measureLabelMetrics(ctx, data, labelFontSize, scale) : [];
 
-  if (data.length) {
-    for (let pass = 0; pass < 4; pass += 1) {
-      const requiredLabelWidth = labelMetrics.reduce((sum, metric) => sum + metric.width, 0) + sidePadding * 2;
-      const expandedWidth = clamp(Math.ceil(requiredLabelWidth), width, 5000);
-
-      if (expandedWidth <= width) {
-        break;
-      }
-
-      width = expandedWidth;
-      state.options.width = expandedWidth;
-      els.widthInput.value = expandedWidth;
-      canvas.width = expandedWidth;
-      ctx = canvas.getContext("2d");
-      scale = Math.min(width / 550, height / 298);
-      titleFontSize = state.options.fontSizes.title;
-      subtitleFontSize = state.options.fontSizes.subtitle;
-      valueFontSize = state.options.fontSizes.numbers;
-      labelFontSize = state.options.fontSizes.labels;
-      titleY = 24 * scale;
-      subtitleY = titleY + 22 * scale;
-      sidePadding = Math.max(16, 14 * scale);
-      labelMetrics = measureLabelMetrics(ctx, data, labelFontSize, scale);
-    }
-  }
-
   ctx.clearRect(0, 0, width, height);
   if (!state.options.transparent) {
     ctx.fillStyle = "#ffffff";
@@ -779,10 +753,21 @@ function renderChart() {
     return;
   }
 
-  const maxLabelLines = Math.max(1, ...labelMetrics.map((metric) => metric.lines.length));
-  const layoutLabelLineHeight = Math.max(16, LAYOUT_FONT_SIZES.labels * 1.28);
   const drawnLabelLineHeight = Math.max(16, labelFontSize * 1.28);
-  const labelArea = Math.max(30 * scale + maxLabelLines * Math.max(layoutLabelLineHeight, drawnLabelLineHeight), 64);
+  const commonSegmentWidth = (width - sidePadding * 2) / data.length;
+  const barWidth = clamp(commonSegmentWidth * 0.38, 10 * scale, 32 * scale);
+  const barCenters = data.map((_, index) => sidePadding + commonSegmentWidth * index + commonSegmentWidth / 2);
+  const labelGap = Math.max(2, 2 * scale);
+  const labelLayout = resolveLabelLayout(
+    barCenters,
+    labelMetrics,
+    0,
+    width,
+    labelGap,
+  );
+  const labelLaneGap = Math.max(6, labelFontSize * 0.18);
+  const labelLaneMetrics = getLabelLaneMetrics(labelMetrics, labelLayout.lanes, drawnLabelLineHeight, labelLaneGap);
+  const labelArea = Math.max(30 * scale + labelLaneMetrics.totalHeight, 64);
   const barBase = height - labelArea;
   const valueBandBottom = subtitleY + 42 * scale;
   let chartTop = Math.max(valueBandBottom, 94 * scale);
@@ -790,20 +775,14 @@ function renderChart() {
   if (barBase - chartTop < minChartHeight) {
     chartTop = Math.max(subtitleY + 30 * scale, barBase - minChartHeight);
   }
-  const labelLayout = buildLabelLayout(labelMetrics, width - sidePadding * 2);
-  const overflowX = Math.max(0, (labelLayout.totalWidth - (width - sidePadding * 2)) / 2);
-  const layoutStartX = sidePadding - overflowX;
   const roundedValues = data.map((party) => Math.max(0, Math.round(party.value)));
   const maxValue = Math.max(1, ...roundedValues);
   const chartHeight = barBase - chartTop;
   const valueGap = Math.max(10, LAYOUT_FONT_SIZES.numbers * 0.48);
-  const commonSegmentWidth = (width - sidePadding * 2) / data.length;
-  const barWidth = clamp(commonSegmentWidth * 0.38, 10 * scale, 32 * scale);
 
   data.forEach((party, index) => {
-    const segment = labelLayout.segments[index];
     const value = roundedValues[index];
-    const centerX = layoutStartX + segment.start + segment.width / 2;
+    const centerX = barCenters[index];
     const x = centerX - barWidth / 2;
     const barHeight = value ? (chartHeight * value) / maxValue : 0;
     const y = barBase - barHeight;
@@ -820,7 +799,7 @@ function renderChart() {
       String(value),
       centerX,
       valueY,
-      Math.max(24 * scale, segment.width),
+      Math.max(24 * scale, commonSegmentWidth),
       valueFontSize,
       10 * scale,
       getTextWeight("numbers"),
@@ -829,8 +808,8 @@ function renderChart() {
     drawPartyLabel(
       ctx,
       party.name,
-      centerX,
-      barBase + 24 * scale,
+      labelLayout.centers[index],
+      barBase + 24 * scale + labelLaneMetrics.offsets[labelLayout.lanes[index]],
       labelFontSize,
       drawnLabelLineHeight,
     );
@@ -872,60 +851,11 @@ function drawFittedText(ctx, text, x, y, maxWidth, startSize, minSize, weight) {
   ctx.fillText(clean, x, y);
 }
 
-function buildLabelLayout(labelMetrics, availableWidth) {
-  const requestedWidths = labelMetrics.map((metric) => metric.width);
-  const requestedTotal = requestedWidths.reduce((sum, value) => sum + value, 0);
-  const targetTotal = Math.max(availableWidth, requestedTotal);
-  const allocatedWidths = allocateLabelWidths(requestedWidths, targetTotal);
-
-  let start = 0;
-  const segments = allocatedWidths.map((width) => {
-    const segment = { start, width };
-    start += width;
-    return segment;
-  });
-
-  return { segments, totalWidth: targetTotal };
-}
-
-function allocateLabelWidths(requestedWidths, targetTotal) {
-  const count = requestedWidths.length;
-  const widths = new Array(count).fill(0);
-  const fixed = new Array(count).fill(false);
-  let remainingTotal = targetTotal;
-  let remainingCount = count;
-  let changed = true;
-
-  while (changed && remainingCount > 0) {
-    changed = false;
-    const fairWidth = remainingTotal / remainingCount;
-
-    for (let index = 0; index < count; index += 1) {
-      if (!fixed[index] && requestedWidths[index] > fairWidth) {
-        widths[index] = requestedWidths[index];
-        fixed[index] = true;
-        remainingTotal -= requestedWidths[index];
-        remainingCount -= 1;
-        changed = true;
-      }
-    }
-  }
-
-  const sharedWidth = remainingCount > 0 ? remainingTotal / remainingCount : 0;
-  for (let index = 0; index < count; index += 1) {
-    if (!fixed[index]) {
-      widths[index] = sharedWidth;
-    }
-  }
-
-  return widths;
-}
-
 function measureLabelMetrics(ctx, data, fontSize, scale) {
-  const labelPadding = Math.max(18, 14 * scale);
+  const labelPadding = Math.max(10, 8 * scale);
   const minimumSegmentWidth = Math.max(42, 30 * scale);
 
-  ctx.font = `${FONT_WEIGHTS.regular} ${Math.max(8, Math.round(fontSize))}px ${FONT_FAMILY}`;
+  ctx.font = `${getTextWeight("labels")} ${Math.max(8, Math.round(fontSize))}px ${FONT_FAMILY}`;
 
   return data.map((party) => {
     const lines = getPartyLabelLines(party.name);
@@ -935,6 +865,151 @@ function measureLabelMetrics(ctx, data, fontSize, scale) {
       width: Math.max(minimumSegmentWidth, Math.ceil(widestLine + labelPadding)),
     };
   });
+}
+
+function resolveLabelLayout(baseCenters, labelMetrics, minX, maxX, gap) {
+  const centers = resolveLabelCenters(baseCenters, labelMetrics, minX, maxX, gap);
+  if (!hasLabelOverlap(centers, labelMetrics, gap)) {
+    return {
+      centers,
+      lanes: new Array(baseCenters.length).fill(0),
+    };
+  }
+
+  return resolveStackedLabelLayout(baseCenters, labelMetrics, minX, maxX, gap);
+}
+
+function resolveLabelCenters(baseCenters, labelMetrics, minX, maxX, gap) {
+  const centers = [...baseCenters];
+  const widths = labelMetrics.map((metric) => metric.width);
+  const count = centers.length;
+
+  if (!count) {
+    return centers;
+  }
+
+  for (let pass = 0; pass < 4; pass += 1) {
+    for (let index = 1; index < count; index += 1) {
+      const previousRight = centers[index - 1] + widths[index - 1] / 2;
+      const currentLeft = centers[index] - widths[index] / 2;
+      if (currentLeft < previousRight + gap) {
+        centers[index] += previousRight + gap - currentLeft;
+      }
+    }
+
+    const overflowRight = centers[count - 1] + widths[count - 1] / 2 - maxX;
+    if (overflowRight > 0) {
+      for (let index = 0; index < count; index += 1) {
+        centers[index] -= overflowRight;
+      }
+    }
+
+    for (let index = count - 2; index >= 0; index -= 1) {
+      const nextLeft = centers[index + 1] - widths[index + 1] / 2;
+      const currentRight = centers[index] + widths[index] / 2;
+      if (currentRight > nextLeft - gap) {
+        centers[index] -= currentRight - (nextLeft - gap);
+      }
+    }
+
+    const overflowLeft = minX - (centers[0] - widths[0] / 2);
+    if (overflowLeft > 0) {
+      for (let index = 0; index < count; index += 1) {
+        centers[index] += overflowLeft;
+      }
+    }
+  }
+
+  return centers;
+}
+
+function hasLabelOverlap(centers, labelMetrics, gap) {
+  for (let index = 1; index < centers.length; index += 1) {
+    const previousRight = centers[index - 1] + labelMetrics[index - 1].width / 2;
+    const currentLeft = centers[index] - labelMetrics[index].width / 2;
+    if (currentLeft < previousRight + gap) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
+function resolveStackedLabelLayout(baseCenters, labelMetrics, minX, maxX, gap) {
+  const centers = new Array(baseCenters.length);
+  const lanes = new Array(baseCenters.length);
+  const laneRightEdges = [];
+
+  baseCenters.forEach((baseCenter, index) => {
+    const width = labelMetrics[index].width;
+    const halfWidth = width / 2;
+    let bestLane = -1;
+    let bestCenter = baseCenter;
+    let bestDistance = Number.POSITIVE_INFINITY;
+
+    laneRightEdges.forEach((rightEdge, laneIndex) => {
+      const minimumCenter = rightEdge + gap + halfWidth;
+      const center = clampLabelCenter(Math.max(baseCenter, minimumCenter), minX, maxX, halfWidth);
+      const left = center - halfWidth;
+      const right = center + halfWidth;
+
+      if (left >= rightEdge + gap && right <= maxX) {
+        const distance = Math.abs(center - baseCenter);
+        if (distance < bestDistance) {
+          bestLane = laneIndex;
+          bestCenter = center;
+          bestDistance = distance;
+        }
+      }
+    });
+
+    if (bestLane === -1) {
+      bestLane = laneRightEdges.length;
+      bestCenter = clampLabelCenter(baseCenter, minX, maxX, halfWidth);
+    }
+
+    centers[index] = bestCenter;
+    lanes[index] = bestLane;
+    laneRightEdges[bestLane] = bestCenter + halfWidth;
+  });
+
+  return { centers, lanes };
+}
+
+function clampLabelCenter(center, minX, maxX, halfWidth) {
+  const minCenter = minX + halfWidth;
+  const maxCenter = maxX - halfWidth;
+
+  if (minCenter > maxCenter) {
+    return (minX + maxX) / 2;
+  }
+
+  return clamp(center, minCenter, maxCenter);
+}
+
+function getLabelLaneMetrics(labelMetrics, lanes, lineHeight, laneGap) {
+  const laneCount = Math.max(1, ...lanes.map((lane) => lane + 1));
+  const heights = new Array(laneCount).fill(0);
+
+  labelMetrics.forEach((metric, index) => {
+    const lane = lanes[index] || 0;
+    heights[lane] = Math.max(heights[lane], metric.lines.length * lineHeight);
+  });
+
+  const offsets = [];
+  let offset = 0;
+  heights.forEach((height, index) => {
+    offsets[index] = offset;
+    offset += height;
+    if (index < heights.length - 1) {
+      offset += laneGap;
+    }
+  });
+
+  return {
+    offsets,
+    totalHeight: offset,
+  };
 }
 
 function getPartyLabelLines(label) {
