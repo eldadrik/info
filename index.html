@@ -1,0 +1,123 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>יוצר גרף סקרי בחירות</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <section class="topbar" aria-labelledby="appTitle">
+        <div>
+          <h1 id="appTitle">יוצר גרף סקרי בחירות</h1>
+        </div>
+        <div class="top-actions">
+          <button id="sampleButton" type="button">טען דוגמה</button>
+          <label class="file-button">
+            <input
+              id="fileInput"
+              type="file"
+              accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+            />
+            <span>בחר XLSX</span>
+          </label>
+          <button id="exportButton" class="primary" type="button">ייצוא PNG</button>
+        </div>
+      </section>
+
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+
+      <section class="workspace">
+        <aside class="controls" aria-label="הגדרות גרף">
+          <div class="field-grid">
+            <label>
+              <span>גליון</span>
+              <select id="sheetSelect"></select>
+            </label>
+            <label>
+              <span>כותרת</span>
+              <input id="titleInput" type="text" />
+            </label>
+            <label>
+              <span>שורת משנה</span>
+              <input id="subtitleInput" type="text" />
+            </label>
+            <label>
+              <span>תאריך</span>
+              <input id="dateInput" type="text" inputmode="decimal" />
+            </label>
+            <label>
+              <span>רוחב PNG</span>
+              <input id="widthInput" type="number" min="420" max="5000" step="10" />
+            </label>
+            <label>
+              <span>גובה PNG</span>
+              <input id="heightInput" type="number" min="240" max="1400" step="10" />
+            </label>
+          </div>
+
+          <div class="toggles" aria-label="אפשרויות">
+            <label>
+              <input id="sortToggle" type="checkbox" checked />
+              <span>מיין לפי מנדטים</span>
+            </label>
+            <label>
+              <input id="transparentToggle" type="checkbox" checked />
+              <span>רקע שקוף</span>
+            </label>
+          </div>
+
+          <div class="table-title">
+            <h2>מפלגות</h2>
+            <button id="addRowButton" type="button">הוסף שורה</button>
+          </div>
+          <section class="font-section" aria-labelledby="fontSectionTitle">
+            <h2 id="fontSectionTitle">גדלי טקסט</h2>
+            <div class="font-grid">
+              <label>
+                <span>כותרת ראשית</span>
+                <input id="titleFontSizeInput" type="number" min="12" max="96" step="1" />
+              </label>
+              <label>
+                <span>כותרת משנה</span>
+                <input id="subtitleFontSizeInput" type="number" min="10" max="72" step="1" />
+              </label>
+              <label>
+                <span>מספרי מנדטים</span>
+                <input id="numberFontSizeInput" type="number" min="8" max="72" step="1" />
+              </label>
+              <label>
+                <span>שמות מפלגות</span>
+                <input id="partyLabelFontSizeInput" type="number" min="8" max="64" step="1" />
+              </label>
+            </div>
+          </section>
+          <div class="table-shell">
+            <table>
+              <thead>
+                <tr>
+                  <th scope="col">שם</th>
+                  <th scope="col">מנדטים</th>
+                  <th scope="col"></th>
+                </tr>
+              </thead>
+              <tbody id="partyTable"></tbody>
+            </table>
+          </div>
+        </aside>
+
+        <section class="preview" aria-label="תצוגה מקדימה">
+          <div class="preview-header">
+            <span id="summaryText"></span>
+          </div>
+          <div class="canvas-stage">
+            <canvas id="chartCanvas" width="1200" height="620"></canvas>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="./app.js" defer></script>
+  </body>
+</html>
