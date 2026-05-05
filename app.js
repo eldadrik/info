@@ -8,7 +8,7 @@ const FONT_WEIGHTS = {
   title: 800,
   subtitle: 400,
   numbers: 800,
-  labels: 800,
+  labels: 400,
 };
 const DEFAULT_FONT_SIZES = {
   title: 34,
@@ -677,10 +677,10 @@ function renderChart() {
   let subtitleFontSize = state.options.fontSizes.subtitle;
   let valueFontSize = state.options.fontSizes.numbers;
   let labelFontSize = state.options.fontSizes.labels;
-  let titleY = Math.max(24 * scale, titleFontSize + 8);
-  let subtitleY = titleY + Math.max(22 * scale, titleFontSize * 1.15);
+  let titleY = 24 * scale;
+  let subtitleY = titleY + 22 * scale;
   let sidePadding = Math.max(16, 14 * scale);
-  let labelMetrics = data.length ? measureLabelMetrics(ctx, data, labelFontSize, scale) : [];
+  let labelMetrics = data.length ? measureLabelMetrics(ctx, data, DEFAULT_FONT_SIZES.labels, scale) : [];
 
   if (data.length) {
     for (let pass = 0; pass < 4; pass += 1) {
@@ -701,10 +701,10 @@ function renderChart() {
       subtitleFontSize = state.options.fontSizes.subtitle;
       valueFontSize = state.options.fontSizes.numbers;
       labelFontSize = state.options.fontSizes.labels;
-      titleY = Math.max(24 * scale, titleFontSize + 8);
-      subtitleY = titleY + Math.max(22 * scale, titleFontSize * 1.15);
+      titleY = 24 * scale;
+      subtitleY = titleY + 22 * scale;
       sidePadding = Math.max(16, 14 * scale);
-      labelMetrics = measureLabelMetrics(ctx, data, labelFontSize, scale);
+      labelMetrics = measureLabelMetrics(ctx, data, DEFAULT_FONT_SIZES.labels, scale);
     }
   }
 
@@ -757,10 +757,11 @@ function renderChart() {
   }
 
   const maxLabelLines = Math.max(1, ...labelMetrics.map((metric) => metric.lines.length));
-  const labelLineHeight = Math.max(16, labelFontSize * 1.28);
-  const labelArea = Math.max(30 * scale + maxLabelLines * labelLineHeight, 64);
+  const layoutLabelLineHeight = Math.max(16, DEFAULT_FONT_SIZES.labels * 1.28);
+  const drawnLabelLineHeight = Math.max(16, labelFontSize * 1.28);
+  const labelArea = Math.max(30 * scale + maxLabelLines * layoutLabelLineHeight, 64);
   const barBase = height - labelArea;
-  const valueBandBottom = subtitleY + Math.max(42 * scale, subtitleFontSize + valueFontSize + 18);
+  const valueBandBottom = subtitleY + 42 * scale;
   let chartTop = Math.max(valueBandBottom, 94 * scale);
   const minChartHeight = 86 * scale;
   if (barBase - chartTop < minChartHeight) {
@@ -772,7 +773,7 @@ function renderChart() {
   const roundedValues = data.map((party) => Math.max(0, Math.round(party.value)));
   const maxValue = Math.max(1, ...roundedValues);
   const chartHeight = barBase - chartTop;
-  const valueGap = Math.max(10, valueFontSize * 0.48);
+  const valueGap = Math.max(10, DEFAULT_FONT_SIZES.numbers * 0.48);
 
   data.forEach((party, index) => {
     const segment = labelLayout.segments[index];
@@ -807,7 +808,7 @@ function renderChart() {
       centerX,
       barBase + 24 * scale,
       labelFontSize,
-      labelLineHeight,
+      drawnLabelLineHeight,
     );
   });
 
