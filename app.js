@@ -9,10 +9,10 @@ const FONT_WEIGHTS = {
   bold: 800,
 };
 const DEFAULT_FONT_SIZES = {
-  title: 34,
-  subtitle: 25,
-  numbers: 24,
-  labels: 24,
+  title: 44,
+  subtitle: 35,
+  numbers: 34,
+  labels: 30,
 };
 const LAYOUT_FONT_SIZES = {
   numbers: 24,
