@@ -68,10 +68,6 @@
             </label>
           </div>
 
-          <div class="table-title">
-            <h2>מפלגות</h2>
-            <button id="addRowButton" type="button">הוסף שורה</button>
-          </div>
           <section class="font-section" aria-labelledby="fontSectionTitle">
             <h2 id="fontSectionTitle">גדלי טקסט</h2>
             <div class="font-grid">
@@ -117,6 +113,36 @@
               </div>
             </div>
           </section>
+          <section class="label-layout-section" aria-labelledby="labelLayoutTitle">
+            <h2 id="labelLayoutTitle">פריסת שמות מפלגות</h2>
+            <div class="label-layout-grid">
+              <label>
+                <span>חפיפה</span>
+                <select id="labelOverlapSelect">
+                  <option value="auto">אוטומטי</option>
+                  <option value="stacked">מדורג</option>
+                  <option value="single">שורה אחת</option>
+                  <option value="hide">הסתר חופפים</option>
+                </select>
+              </label>
+              <label>
+                <span>צפיפות</span>
+                <select id="labelDensitySelect">
+                  <option value="compact">צפופה</option>
+                  <option value="balanced" selected>מאוזנת</option>
+                  <option value="spacious">מרווחת</option>
+                </select>
+              </label>
+              <label>
+                <span>מרחק מהעמודות</span>
+                <input id="labelColumnGapInput" type="number" min="0" max="160" step="1" />
+              </label>
+            </div>
+          </section>
+          <div class="table-title">
+            <h2>מפלגות</h2>
+            <button id="addRowButton" type="button">הוסף שורה</button>
+          </div>
           <div class="table-shell">
             <table>
               <thead>

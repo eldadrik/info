@@ -36,7 +36,7 @@ http://localhost:8000/
 1. Load the sample workbook with `טען דוגמה`, or import a new workbook with `בחר XLSX`.
 2. Select the relevant sheet.
 3. Review and edit the title, subtitle, date, party names, and mandate values.
-4. Adjust PNG dimensions, sorting, transparent background, font sizes, and bold settings.
+4. Adjust PNG dimensions, sorting, transparent background, font sizes, bold settings, and party-label layout.
 5. Check the canvas preview.
 6. Export with `ייצוא PNG`.
 
@@ -103,5 +103,5 @@ Before handing off changes, verify:
 - `בחר XLSX` imports `סקר הסקרים - 27.4.xlsx`.
 - Switching between `כל הסקרים` and `ממוצע` updates the chart data.
 - Editing title, subtitle, date, party rows, and mandate values updates the preview.
-- Sorting, transparent background, font size, and bold controls update the preview.
+- Sorting, transparent background, font size, bold, and party-label layout controls update the preview.
 - PNG export creates a usable image comparable to the included PNG examples.

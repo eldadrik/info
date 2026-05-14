@@ -164,7 +164,8 @@ h2 {
 }
 
 .field-grid label,
-.font-control > label:not(.bold-toggle) {
+.font-control > label:not(.bold-toggle),
+.label-layout-grid label {
   display: grid;
   gap: 6px;
 }
@@ -176,6 +177,7 @@ h2 {
 
 .field-grid span,
 .font-grid span,
+.label-layout-grid span,
 .toggles span {
   color: var(--muted);
   font-size: 13px;
@@ -229,7 +231,8 @@ button:focus-visible {
   border-radius: 8px;
 }
 
-.font-section {
+.font-section,
+.label-layout-section {
   margin-top: 14px;
   margin-bottom: 16px;
   padding-top: 16px;
@@ -243,7 +246,19 @@ button:focus-visible {
   margin-top: 12px;
 }
 
-.font-grid input[type="number"] {
+.label-layout-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.label-layout-grid label:last-child {
+  grid-column: 1 / -1;
+}
+
+.font-grid input[type="number"],
+.label-layout-grid input[type="number"] {
   direction: ltr;
   text-align: center;
   font-weight: 700;
@@ -403,6 +418,10 @@ canvas {
   }
 
   .font-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .label-layout-grid {
     grid-template-columns: 1fr;
   }
 

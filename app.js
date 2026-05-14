@@ -13,7 +13,7 @@ const DEFAULT_FONT_SIZES = {
   title: 44,
   subtitle: 35,
   numbers: 34,
-  labels: 30,
+  labels: 23,
 };
 const LAYOUT_FONT_SIZES = {
   numbers: 24,
@@ -25,6 +25,50 @@ const DEFAULT_FONT_BOLD = {
   numbers: true,
   labels: false,
 };
+const DEFAULT_LABEL_COLUMN_GAP = 8;
+const LABEL_OVERLAP_MODES = new Set(["auto", "stacked", "single", "hide"]);
+const LABEL_DENSITY_SETTINGS = {
+  compact: {
+    labelPaddingRatio: 0.04,
+    labelPaddingMin: 2,
+    labelPaddingScale: 0.3,
+    minimumWidthRatio: 0.55,
+    minimumWidthMin: 16,
+    gapScale: 0.25,
+    gapMin: 0,
+    lineHeightRatio: 1,
+    lineHeightMin: 11,
+    laneGapRatio: 0.04,
+    laneGapMin: 1,
+  },
+  balanced: {
+    labelPaddingRatio: 0.1,
+    labelPaddingMin: 4,
+    labelPaddingScale: 0.7,
+    minimumWidthRatio: 0.8,
+    minimumWidthMin: 22,
+    gapScale: 0.8,
+    gapMin: 1,
+    lineHeightRatio: 1.12,
+    lineHeightMin: 12,
+    laneGapRatio: 0.12,
+    laneGapMin: 3,
+  },
+  spacious: {
+    labelPaddingRatio: 0.18,
+    labelPaddingMin: 8,
+    labelPaddingScale: 1.3,
+    minimumWidthRatio: 1.05,
+    minimumWidthMin: 30,
+    gapScale: 1.6,
+    gapMin: 3,
+    lineHeightRatio: 1.22,
+    lineHeightMin: 14,
+    laneGapRatio: 0.2,
+    laneGapMin: 6,
+  },
+};
+const LABEL_DENSITY_MODES = new Set(Object.keys(LABEL_DENSITY_SETTINGS));
 
 const defaultParties = [
   { name: "הליכוד", value: 28.8333333333 },
@@ -55,6 +99,9 @@ const state = {
     transparent: true,
     width: 1200,
     height: 620,
+    labelOverlap: "auto",
+    labelDensity: "balanced",
+    labelColumnGap: DEFAULT_LABEL_COLUMN_GAP,
     fontSizes: { ...DEFAULT_FONT_SIZES },
     fontBold: { ...DEFAULT_FONT_BOLD },
   },
@@ -75,6 +122,9 @@ const els = {
   subtitleFontSizeInput: document.querySelector("#subtitleFontSizeInput"),
   numberFontSizeInput: document.querySelector("#numberFontSizeInput"),
   partyLabelFontSizeInput: document.querySelector("#partyLabelFontSizeInput"),
+  labelOverlapSelect: document.querySelector("#labelOverlapSelect"),
+  labelDensitySelect: document.querySelector("#labelDensitySelect"),
+  labelColumnGapInput: document.querySelector("#labelColumnGapInput"),
   titleBoldInput: document.querySelector("#titleBoldInput"),
   subtitleBoldInput: document.querySelector("#subtitleBoldInput"),
   numberBoldInput: document.querySelector("#numberBoldInput"),
@@ -608,6 +658,9 @@ function syncControls() {
   els.subtitleFontSizeInput.value = state.options.fontSizes.subtitle;
   els.numberFontSizeInput.value = state.options.fontSizes.numbers;
   els.partyLabelFontSizeInput.value = state.options.fontSizes.labels;
+  els.labelOverlapSelect.value = state.options.labelOverlap;
+  els.labelDensitySelect.value = state.options.labelDensity;
+  els.labelColumnGapInput.value = state.options.labelColumnGap;
   els.titleBoldInput.checked = state.options.fontBold.title;
   els.subtitleBoldInput.checked = state.options.fontBold.subtitle;
   els.numberBoldInput.checked = state.options.fontBold.numbers;
@@ -676,6 +729,14 @@ function renderChart() {
     numbers: readFontSize(els.numberFontSizeInput, DEFAULT_FONT_SIZES.numbers, 8, 72),
     labels: readFontSize(els.partyLabelFontSizeInput, DEFAULT_FONT_SIZES.labels, 8, 64),
   };
+  state.options.labelOverlap = readSelectValue(els.labelOverlapSelect, LABEL_OVERLAP_MODES, "auto");
+  state.options.labelDensity = readSelectValue(els.labelDensitySelect, LABEL_DENSITY_MODES, "balanced");
+  state.options.labelColumnGap = readNumberInput(
+    els.labelColumnGapInput,
+    DEFAULT_LABEL_COLUMN_GAP,
+    0,
+    160,
+  );
   state.options.fontBold = {
     title: els.titleBoldInput.checked,
     subtitle: els.subtitleBoldInput.checked,
@@ -704,7 +765,8 @@ function renderChart() {
   let titleY = 24 * scale;
   let subtitleY = titleY + 22 * scale;
   let sidePadding = Math.max(16, 14 * scale);
-  let labelMetrics = data.length ? measureLabelMetrics(ctx, data, labelFontSize, scale) : [];
+  const labelSettings = getLabelDensitySettings(state.options.labelDensity);
+  let labelMetrics = data.length ? measureLabelMetrics(ctx, data, labelFontSize, scale, labelSettings) : [];
 
   ctx.clearRect(0, 0, width, height);
   if (!state.options.transparent) {
@@ -757,21 +819,28 @@ function renderChart() {
     return;
   }
 
-  const drawnLabelLineHeight = Math.max(12, labelFontSize * 1.08);
+  const drawnLabelLineHeight = Math.max(labelSettings.lineHeightMin, labelFontSize * labelSettings.lineHeightRatio);
   const commonSegmentWidth = (width - sidePadding * 2) / data.length;
   const barWidth = clamp(commonSegmentWidth * 0.38, 10 * scale, 32 * scale);
   const barCenters = data.map((_, index) => sidePadding + commonSegmentWidth * index + commonSegmentWidth / 2);
-  const labelGap = Math.max(0.5, 0.45 * scale);
+  const labelGap = Math.max(labelSettings.gapMin, labelSettings.gapScale * scale);
   const labelLayout = resolveLabelLayout(
     barCenters,
     labelMetrics,
     0,
     width,
     labelGap,
+    state.options.labelOverlap,
   );
-  const labelLaneGap = Math.max(2, labelFontSize * 0.08);
-  const labelLaneMetrics = getLabelLaneMetrics(labelMetrics, labelLayout.lanes, drawnLabelLineHeight, labelLaneGap);
-  const labelTopGap = Math.max(14, labelFontSize * 0.45);
+  const labelLaneGap = Math.max(labelSettings.laneGapMin, labelFontSize * labelSettings.laneGapRatio);
+  const labelLaneMetrics = getLabelLaneMetrics(
+    labelMetrics,
+    labelLayout.lanes,
+    drawnLabelLineHeight,
+    labelLaneGap,
+    labelLayout.visible,
+  );
+  const labelTopGap = state.options.labelColumnGap;
   const labelBottomGap = Math.max(8, 3 * scale);
   const labelArea = Math.max(labelTopGap + labelLaneMetrics.totalHeight + labelBottomGap, 64);
   const barBase = height - labelArea;
@@ -812,14 +881,16 @@ function renderChart() {
       GRAPH_FONT_FAMILY,
     );
 
-    drawPartyLabel(
-      ctx,
-      party.name,
-      labelLayout.centers[index],
-      barBase + labelTopGap + labelLaneMetrics.offsets[labelLayout.lanes[index]],
-      labelFontSize,
-      drawnLabelLineHeight,
-    );
+    if (labelLayout.visible[index]) {
+      drawPartyLabel(
+        ctx,
+        party.name,
+        labelLayout.centers[index],
+        barBase + labelTopGap + labelLaneMetrics.offsets[labelLayout.lanes[index]],
+        labelFontSize,
+        drawnLabelLineHeight,
+      );
+    }
   });
 
   updateSummary();
@@ -858,9 +929,13 @@ function drawFittedText(ctx, text, x, y, maxWidth, startSize, minSize, weight, f
   ctx.fillText(clean, x, y);
 }
 
-function measureLabelMetrics(ctx, data, fontSize, scale) {
-  const labelPadding = Math.max(2, fontSize * 0.06, scale * 0.4);
-  const minimumSegmentWidth = Math.max(18, fontSize * 0.7);
+function measureLabelMetrics(ctx, data, fontSize, scale, settings) {
+  const labelPadding = Math.max(
+    settings.labelPaddingMin,
+    fontSize * settings.labelPaddingRatio,
+    scale * settings.labelPaddingScale,
+  );
+  const minimumSegmentWidth = Math.max(settings.minimumWidthMin, fontSize * settings.minimumWidthRatio);
 
   ctx.font = `${getTextWeight("labels")} ${Math.max(8, Math.round(fontSize))}px ${GRAPH_FONT_FAMILY}`;
 
@@ -874,16 +949,62 @@ function measureLabelMetrics(ctx, data, fontSize, scale) {
   });
 }
 
-function resolveLabelLayout(baseCenters, labelMetrics, minX, maxX, gap) {
+function resolveLabelLayout(baseCenters, labelMetrics, minX, maxX, gap, mode) {
+  if (mode === "single") {
+    return resolveSingleRowLabelLayout(baseCenters, labelMetrics, minX, maxX);
+  }
+
+  if (mode === "stacked") {
+    return resolveStackedLabelLayout(baseCenters, labelMetrics, minX, maxX, gap);
+  }
+
+  if (mode === "hide") {
+    return resolveHiddenLabelLayout(baseCenters, labelMetrics, minX, maxX, gap);
+  }
+
   const centers = resolveLabelCenters(baseCenters, labelMetrics, minX, maxX, gap);
   if (!hasLabelOverlap(centers, labelMetrics, gap)) {
     return {
       centers,
       lanes: new Array(baseCenters.length).fill(0),
+      visible: new Array(baseCenters.length).fill(true),
     };
   }
 
   return resolveStackedLabelLayout(baseCenters, labelMetrics, minX, maxX, gap);
+}
+
+function resolveSingleRowLabelLayout(baseCenters, labelMetrics, minX, maxX) {
+  return {
+    centers: baseCenters.map((center, index) =>
+      clampLabelCenter(center, minX, maxX, labelMetrics[index].width / 2),
+    ),
+    lanes: new Array(baseCenters.length).fill(0),
+    visible: new Array(baseCenters.length).fill(true),
+  };
+}
+
+function resolveHiddenLabelLayout(baseCenters, labelMetrics, minX, maxX, gap) {
+  const centers = resolveLabelCenters(baseCenters, labelMetrics, minX, maxX, gap);
+  const visible = new Array(baseCenters.length).fill(true);
+  let previousRight = Number.NEGATIVE_INFINITY;
+
+  centers.forEach((center, index) => {
+    const halfWidth = labelMetrics[index].width / 2;
+    const left = center - halfWidth;
+    const right = center + halfWidth;
+    if (left < previousRight + gap) {
+      visible[index] = false;
+      return;
+    }
+    previousRight = right;
+  });
+
+  return {
+    centers,
+    lanes: new Array(baseCenters.length).fill(0),
+    visible,
+  };
 }
 
 function resolveLabelCenters(baseCenters, labelMetrics, minX, maxX, gap) {
@@ -980,7 +1101,11 @@ function resolveStackedLabelLayout(baseCenters, labelMetrics, minX, maxX, gap) {
     laneRightEdges[bestLane] = bestCenter + halfWidth;
   });
 
-  return { centers, lanes };
+  return {
+    centers,
+    lanes,
+    visible: new Array(baseCenters.length).fill(true),
+  };
 }
 
 function clampLabelCenter(center, minX, maxX, halfWidth) {
@@ -994,11 +1119,14 @@ function clampLabelCenter(center, minX, maxX, halfWidth) {
   return clamp(center, minCenter, maxCenter);
 }
 
-function getLabelLaneMetrics(labelMetrics, lanes, lineHeight, laneGap) {
+function getLabelLaneMetrics(labelMetrics, lanes, lineHeight, laneGap, visible) {
   const laneCount = Math.max(1, ...lanes.map((lane) => lane + 1));
   const heights = new Array(laneCount).fill(0);
 
   labelMetrics.forEach((metric, index) => {
+    if (visible[index] === false) {
+      return;
+    }
     const lane = lanes[index] || 0;
     heights[lane] = Math.max(heights[lane], metric.lines.length * lineHeight);
   });
@@ -1050,7 +1178,7 @@ function clamp(value, min, max) {
   return Math.min(max, Math.max(min, value));
 }
 
-function readFontSize(input, fallback, min, max) {
+function readNumberInput(input, fallback, min, max) {
   const value = Number(input.value);
   const next = Number.isFinite(value) ? Math.round(value) : fallback;
   const clamped = clamp(next, min, max);
@@ -1058,6 +1186,22 @@ function readFontSize(input, fallback, min, max) {
     input.value = clamped;
   }
   return clamped;
+}
+
+function readFontSize(input, fallback, min, max) {
+  return readNumberInput(input, fallback, min, max);
+}
+
+function readSelectValue(select, allowedValues, fallback) {
+  if (allowedValues.has(select.value)) {
+    return select.value;
+  }
+  select.value = fallback;
+  return fallback;
+}
+
+function getLabelDensitySettings(mode) {
+  return LABEL_DENSITY_SETTINGS[mode] || LABEL_DENSITY_SETTINGS.balanced;
 }
 
 function getTextWeight(key) {
@@ -1166,6 +1310,7 @@ for (const input of [
   els.subtitleFontSizeInput,
   els.numberFontSizeInput,
   els.partyLabelFontSizeInput,
+  els.labelColumnGapInput,
 ]) {
   input.addEventListener("input", renderChart);
 }
@@ -1173,6 +1318,8 @@ for (const input of [
 for (const input of [
   els.sortToggle,
   els.transparentToggle,
+  els.labelOverlapSelect,
+  els.labelDensitySelect,
   els.titleBoldInput,
   els.subtitleBoldInput,
   els.numberBoldInput,
