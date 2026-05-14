@@ -1,7 +1,8 @@
 "use strict";
 
 const SAMPLE_FILE_NAME = "סקר הסקרים - 27.4.xlsx";
-const FONT_FAMILY = '"Heebo", Arial, "Noto Sans Hebrew", "Segoe UI", sans-serif';
+const TITLE_FONT_FAMILY = '"FbPractica", "Heebo", Arial, "Noto Sans Hebrew", "Segoe UI", sans-serif';
+const GRAPH_FONT_FAMILY = '"FbPracticaNarrow", "FbPractica", "Heebo", Arial, "Noto Sans Hebrew", "Segoe UI", sans-serif';
 const TEXT_COLOR = "#231F20";
 const BAR_COLORS = ["#2381BE", "#40A1D9"];
 const FONT_WEIGHTS = {
@@ -725,6 +726,7 @@ function renderChart() {
     titleFontSize,
     Math.max(8, titleFontSize * 0.55),
     getTextWeight("title"),
+    TITLE_FONT_FAMILY,
   );
   const subtitle = state.meta.date ? `${state.meta.subtitle} (${state.meta.date})` : state.meta.subtitle;
   drawFittedText(
@@ -736,6 +738,7 @@ function renderChart() {
     subtitleFontSize,
     Math.max(8, subtitleFontSize * 0.55),
     getTextWeight("subtitle"),
+    TITLE_FONT_FAMILY,
   );
 
   if (!data.length) {
@@ -748,16 +751,17 @@ function renderChart() {
       18 * scale,
       12 * scale,
       getTextWeight("title"),
+      GRAPH_FONT_FAMILY,
     );
     updateSummary();
     return;
   }
 
-  const drawnLabelLineHeight = Math.max(16, labelFontSize * 1.28);
+  const drawnLabelLineHeight = Math.max(12, labelFontSize * 1.08);
   const commonSegmentWidth = (width - sidePadding * 2) / data.length;
   const barWidth = clamp(commonSegmentWidth * 0.38, 10 * scale, 32 * scale);
   const barCenters = data.map((_, index) => sidePadding + commonSegmentWidth * index + commonSegmentWidth / 2);
-  const labelGap = Math.max(2, 2 * scale);
+  const labelGap = Math.max(0.5, 0.45 * scale);
   const labelLayout = resolveLabelLayout(
     barCenters,
     labelMetrics,
@@ -765,9 +769,11 @@ function renderChart() {
     width,
     labelGap,
   );
-  const labelLaneGap = Math.max(6, labelFontSize * 0.18);
+  const labelLaneGap = Math.max(2, labelFontSize * 0.08);
   const labelLaneMetrics = getLabelLaneMetrics(labelMetrics, labelLayout.lanes, drawnLabelLineHeight, labelLaneGap);
-  const labelArea = Math.max(30 * scale + labelLaneMetrics.totalHeight, 64);
+  const labelTopGap = Math.max(14, labelFontSize * 0.45);
+  const labelBottomGap = Math.max(8, 3 * scale);
+  const labelArea = Math.max(labelTopGap + labelLaneMetrics.totalHeight + labelBottomGap, 64);
   const barBase = height - labelArea;
   const valueBandBottom = subtitleY + 42 * scale;
   let chartTop = Math.max(valueBandBottom, 94 * scale);
@@ -803,13 +809,14 @@ function renderChart() {
       valueFontSize,
       10 * scale,
       getTextWeight("numbers"),
+      GRAPH_FONT_FAMILY,
     );
 
     drawPartyLabel(
       ctx,
       party.name,
       labelLayout.centers[index],
-      barBase + 24 * scale + labelLaneMetrics.offsets[labelLayout.lanes[index]],
+      barBase + labelTopGap + labelLaneMetrics.offsets[labelLayout.lanes[index]],
       labelFontSize,
       drawnLabelLineHeight,
     );
@@ -833,7 +840,7 @@ function getRenderableParties() {
   return parties;
 }
 
-function drawFittedText(ctx, text, x, y, maxWidth, startSize, minSize, weight) {
+function drawFittedText(ctx, text, x, y, maxWidth, startSize, minSize, weight, fontFamily) {
   const clean = cleanText(text);
   if (!clean) {
     return;
@@ -841,21 +848,21 @@ function drawFittedText(ctx, text, x, y, maxWidth, startSize, minSize, weight) {
 
   let size = startSize;
   while (size > minSize) {
-    ctx.font = `${weight} ${Math.round(size)}px ${FONT_FAMILY}`;
+    ctx.font = `${weight} ${Math.round(size)}px ${fontFamily}`;
     if (ctx.measureText(clean).width <= maxWidth) {
       break;
     }
     size -= 1;
   }
-  ctx.font = `${weight} ${Math.max(Math.round(size), Math.round(minSize))}px ${FONT_FAMILY}`;
+  ctx.font = `${weight} ${Math.max(Math.round(size), Math.round(minSize))}px ${fontFamily}`;
   ctx.fillText(clean, x, y);
 }
 
 function measureLabelMetrics(ctx, data, fontSize, scale) {
-  const labelPadding = Math.max(10, 8 * scale);
-  const minimumSegmentWidth = Math.max(42, 30 * scale);
+  const labelPadding = Math.max(2, fontSize * 0.06, scale * 0.4);
+  const minimumSegmentWidth = Math.max(18, fontSize * 0.7);
 
-  ctx.font = `${getTextWeight("labels")} ${Math.max(8, Math.round(fontSize))}px ${FONT_FAMILY}`;
+  ctx.font = `${getTextWeight("labels")} ${Math.max(8, Math.round(fontSize))}px ${GRAPH_FONT_FAMILY}`;
 
   return data.map((party) => {
     const lines = getPartyLabelLines(party.name);
@@ -1018,15 +1025,18 @@ function getPartyLabelLines(label) {
 }
 
 function drawPartyLabel(ctx, label, centerX, firstLineY, fontSize, lineHeight) {
-  ctx.font = `${getTextWeight("labels")} ${Math.max(8, Math.round(fontSize))}px ${FONT_FAMILY}`;
+  const previousBaseline = ctx.textBaseline;
+  ctx.textBaseline = "top";
+  ctx.font = `${getTextWeight("labels")} ${Math.max(8, Math.round(fontSize))}px ${GRAPH_FONT_FAMILY}`;
   ctx.fillStyle = TEXT_COLOR;
   getPartyLabelLines(label).forEach((line, index) => {
     ctx.fillText(line, centerX, firstLineY + index * lineHeight);
   });
+  ctx.textBaseline = previousBaseline;
 }
 
 function measureText(ctx, text, fontSize, weight) {
-  ctx.font = `${weight} ${Math.max(8, Math.round(fontSize))}px ${FONT_FAMILY}`;
+  ctx.font = `${weight} ${Math.max(8, Math.round(fontSize))}px ${GRAPH_FONT_FAMILY}`;
   return ctx.measureText(text).width;
 }
 
@@ -1077,6 +1087,10 @@ async function ensureFontsReady() {
 
   try {
     await Promise.all([
+      document.fonts.load("400 18px FbPractica"),
+      document.fonts.load("800 24px FbPractica"),
+      document.fonts.load("400 18px FbPracticaNarrow"),
+      document.fonts.load("800 24px FbPracticaNarrow"),
       document.fonts.load("400 18px Heebo"),
       document.fonts.load("700 18px Heebo"),
       document.fonts.load("800 24px Heebo"),

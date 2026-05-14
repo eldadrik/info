@@ -1,5 +1,107 @@
-# Election Poll Chart App
+# Newspaper Infographic Web App
 
-Static browser app for importing an election poll XLSX file, editing party names and mandate numbers, previewing the chart, and exporting a PNG.
+Static browser app for newspaper writers who need to turn election-poll Excel files into publishable infographic PNGs.
 
-Open `index.html` in Chrome or Edge. Use `טען דוגמה` for the included sample workbook or `בחר XLSX` for a new file.
+The app runs entirely in the browser. It reads an `.xlsx` workbook, extracts party names and mandate values, lets the user edit the chart content and typography, previews the result on a canvas, and exports a transparent PNG.
+
+## Project Structure
+
+- `index.html` - Hebrew RTL app shell and form controls.
+- `styles.css` - responsive layout and editor styling.
+- `app.js` - XLSX parsing, data extraction, chart rendering, and PNG export.
+- `סקר הסקרים - 27.4.xlsx` - sample election-poll workbook.
+- `EXAMPLE.png` - reference infographic example.
+- `election-polls-27.4 (6).png` - exported output example.
+
+There is no build step and no package install. The app does not use a backend.
+
+## Running Locally
+
+For normal manual use, open `index.html` in a current Chrome or Edge browser and choose an `.xlsx` file with `בחר XLSX`.
+
+To use the bundled `טען דוגמה` sample button reliably, serve the folder through a local static server because browsers usually block `fetch()` from `file://` pages:
+
+```powershell
+python -m http.server 8000
+```
+
+Then open:
+
+```text
+http://localhost:8000/
+```
+
+## Writer Workflow
+
+1. Load the sample workbook with `טען דוגמה`, or import a new workbook with `בחר XLSX`.
+2. Select the relevant sheet.
+3. Review and edit the title, subtitle, date, party names, and mandate values.
+4. Adjust PNG dimensions, sorting, transparent background, font sizes, and bold settings.
+5. Check the canvas preview.
+6. Export with `ייצוא PNG`.
+
+The exported filename follows this pattern:
+
+```text
+election-polls-{date}.png
+```
+
+## XLSX Input Format
+
+The parser is intentionally permissive so newsroom spreadsheets can stay simple.
+
+Recommended workbook layout:
+
+- Row 1: infographic title, for example `נתוני 6 הסקרים האחרונים`.
+- Row 2: subtitle, for example `שפורסמו בכלי התקשורת`.
+- Row 3: date, for example `27.4`.
+- Header row: must contain a party-name column named `מפלגה` or `party`.
+- Data rows: party names and mandate numbers.
+
+Mandate values can be provided in either form:
+
+- A single `ממוצע`, `average`, or `avg` column.
+- Multiple numeric poll columns. In this case, the app averages the numeric cells per party.
+
+The sample workbook includes both patterns:
+
+- `כל הסקרים` - individual poll columns from several media outlets.
+- `ממוצע` - precomputed average column.
+
+When a workbook has a sheet named `ממוצע`, `average`, or `avg`, the app prefers it by default.
+
+Rows whose names look like summaries are skipped, including coalition, opposition, total, and Hebrew equivalents such as `קואליציה`, `אופוזיציה`, and `סה"כ`.
+
+## Implementation Notes
+
+- XLSX files are read client-side in `app.js` by parsing the ZIP container and internal XML files directly.
+- Deflated XLSX entries use the browser `DecompressionStream` API.
+- Chart output is rendered with the HTML canvas API.
+- Hebrew labels are split by words and repositioned to reduce overlap.
+- Mandate numbers are rounded for display in the infographic.
+- The transparent-background toggle affects the exported canvas itself; the checkerboard pattern is only a preview background.
+
+## Browser Requirements
+
+Use a current Chromium-based browser such as Chrome or Edge.
+
+Required browser APIs include:
+
+- `File`
+- `Blob`
+- `DOMParser`
+- `TextDecoder`
+- `DecompressionStream`
+- `HTMLCanvasElement.toBlob`
+
+## Manual Test Checklist
+
+Before handing off changes, verify:
+
+- `index.html` opens in Chrome or Edge.
+- `טען דוגמה` loads the sample workbook when served over `http://localhost`.
+- `בחר XLSX` imports `סקר הסקרים - 27.4.xlsx`.
+- Switching between `כל הסקרים` and `ממוצע` updates the chart data.
+- Editing title, subtitle, date, party rows, and mandate values updates the preview.
+- Sorting, transparent background, font size, and bold controls update the preview.
+- PNG export creates a usable image comparable to the included PNG examples.
