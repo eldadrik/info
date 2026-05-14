@@ -1,8 +1,33 @@
 "use strict";
 
 const SAMPLE_FILE_NAME = "סקר הסקרים - 27.4.xlsx";
-const TITLE_FONT_FAMILY = '"FbPractica", "Heebo", Arial, "Noto Sans Hebrew", "Segoe UI", sans-serif';
-const GRAPH_FONT_FAMILY = '"FbPracticaNarrow", "FbPractica", "Heebo", Arial, "Noto Sans Hebrew", "Segoe UI", sans-serif';
+const TITLE_FONT_FAMILY = '"FbPractica", "Fb Practica", "Heebo", Arial, "Noto Sans Hebrew", "Segoe UI", sans-serif';
+const GRAPH_FONT_FAMILY =
+  '"FbPracticaNarrow", "Fb Practica Narrow", "FbPractica Narrow", "FbPractica", "Fb Practica", "Heebo", Arial, "Noto Sans Hebrew", "Segoe UI", sans-serif';
+const REQUIRED_CANVAS_FONTS = [
+  {
+    name: "FbPractica",
+    family: "FbPractica",
+    aliases: ["FbPractica", "Fb Practica"],
+    sources: [
+      "./fonts/FbPractica.woff2",
+      "./fonts/FbPractica.woff",
+      "./fonts/FbPractica.ttf",
+      "./fonts/FbPractica.otf",
+    ],
+  },
+  {
+    name: "FbPracticaNarrow",
+    family: "FbPracticaNarrow",
+    aliases: ["FbPracticaNarrow", "Fb Practica Narrow", "FbPractica Narrow"],
+    sources: [
+      "./fonts/FbPracticaNarrow.woff2",
+      "./fonts/FbPracticaNarrow.woff",
+      "./fonts/FbPracticaNarrow.ttf",
+      "./fonts/FbPracticaNarrow.otf",
+    ],
+  },
+];
 const TEXT_COLOR = "#231F20";
 const BAR_COLORS = ["#2381BE", "#40A1D9"];
 const FONT_WEIGHTS = {
@@ -12,8 +37,8 @@ const FONT_WEIGHTS = {
 const DEFAULT_FONT_SIZES = {
   title: 44,
   subtitle: 35,
-  numbers: 34,
-  labels: 23,
+  numbers: 24,
+  labels: 26,
 };
 const LAYOUT_FONT_SIZES = {
   numbers: 24,
@@ -98,7 +123,7 @@ const state = {
     sort: true,
     transparent: true,
     width: 1200,
-    height: 620,
+    height: 580,
     labelOverlap: "auto",
     labelDensity: "balanced",
     labelColumnGap: DEFAULT_LABEL_COLUMN_GAP,
@@ -136,6 +161,8 @@ const els = {
   summaryText: document.querySelector("#summaryText"),
   chartCanvas: document.querySelector("#chartCanvas"),
 };
+
+let fontAvailabilityPromise = null;
 
 class ZipReader {
   constructor(arrayBuffer) {
@@ -1225,29 +1252,107 @@ async function handleFile(file) {
 }
 
 async function ensureFontsReady() {
-  if (!document.fonts) {
-    return;
+  if (!fontAvailabilityPromise) {
+    fontAvailabilityPromise = resolveFontAvailability();
   }
+  return fontAvailabilityPromise;
+}
 
+async function resolveFontAvailability() {
   try {
-    await Promise.all([
-      document.fonts.load("400 18px FbPractica"),
-      document.fonts.load("800 24px FbPractica"),
-      document.fonts.load("400 18px FbPracticaNarrow"),
-      document.fonts.load("800 24px FbPracticaNarrow"),
-      document.fonts.load("400 18px Heebo"),
-      document.fonts.load("700 18px Heebo"),
-      document.fonts.load("800 24px Heebo"),
-    ]);
-    await document.fonts.ready;
+    await loadBundledFonts();
+    if (document.fonts) {
+      await Promise.all([
+        document.fonts.load("400 18px FbPractica"),
+        document.fonts.load("800 24px FbPractica"),
+        document.fonts.load("400 18px FbPracticaNarrow"),
+        document.fonts.load("800 24px FbPracticaNarrow"),
+        document.fonts.load("400 18px Heebo"),
+        document.fonts.load("700 18px Heebo"),
+        document.fonts.load("800 24px Heebo"),
+      ]);
+      await document.fonts.ready;
+    }
   } catch (error) {
     console.warn("Font loading did not complete before rendering.", error);
   }
+
+  const missing = REQUIRED_CANVAS_FONTS
+    .filter((font) => !font.aliases.some((family) => isCanvasFontAvailable(family)))
+    .map((font) => font.name);
+
+  return { missing };
+}
+
+async function loadBundledFonts() {
+  if (!("FontFace" in window) || !document.fonts) {
+    return;
+  }
+
+  await Promise.all(REQUIRED_CANVAS_FONTS.map(loadBundledFont));
+}
+
+async function loadBundledFont(font) {
+  for (const source of font.sources) {
+    const loaded = await tryLoadFontFile(font.family, source);
+    if (loaded) {
+      return true;
+    }
+  }
+  return false;
+}
+
+async function tryLoadFontFile(family, source) {
+  try {
+    const response = await fetch(source, { cache: "force-cache" });
+    if (!response.ok) {
+      return false;
+    }
+    const fontData = await response.arrayBuffer();
+    const fontFace = new FontFace(family, fontData);
+    await fontFace.load();
+    document.fonts.add(fontFace);
+    return true;
+  } catch (error) {
+    return false;
+  }
+}
+
+function isCanvasFontAvailable(family) {
+  const canvas = document.createElement("canvas");
+  const ctx = canvas.getContext("2d");
+  if (!ctx) {
+    return false;
+  }
+
+  const sample = "אבגדהוזחטיכלמנסעפצקרשת 0123456789";
+  const size = 72;
+  const testWidth = measureFontSample(ctx, `"${family}", Arial`, size, sample);
+  const fallbackWidth = measureFontSample(ctx, "Arial", size, sample);
+  const alternateTestWidth = measureFontSample(ctx, `"${family}", Georgia`, size, sample);
+  const alternateFallbackWidth = measureFontSample(ctx, "Georgia", size, sample);
+
+  return (
+    Math.abs(testWidth - fallbackWidth) > 0.5 ||
+    Math.abs(alternateTestWidth - alternateFallbackWidth) > 0.5
+  );
+}
+
+function measureFontSample(ctx, fontFamily, size, sample) {
+  ctx.font = `400 ${size}px ${fontFamily}`;
+  return ctx.measureText(sample).width;
+}
+
+function getFontWarningMessage(missing) {
+  return `חסרים פונטים לגרף: ${missing.join(", ")}. התקן אותם במחשב או הוסף קבצים מורשים לתיקיית fonts.`;
 }
 
 async function downloadPng() {
-  await ensureFontsReady();
+  const fontStatus = await ensureFontsReady();
   renderChart();
+  if (fontStatus.missing.length) {
+    setStatus(getFontWarningMessage(fontStatus.missing), "warning");
+  }
   const fileDate = state.meta.date ? state.meta.date.replace(/[^\d.-]+/g, "-") : "chart";
   els.chartCanvas.toBlob((blob) => {
     if (!blob) {
@@ -1369,4 +1474,9 @@ els.exportButton.addEventListener("click", downloadPng);
 syncControls();
 renderPartyTable();
 renderChart();
-ensureFontsReady().then(renderChart);
+ensureFontsReady().then((fontStatus) => {
+  renderChart();
+  if (fontStatus.missing.length) {
+    setStatus(getFontWarningMessage(fontStatus.missing), "warning");
+  }
+});

@@ -80,6 +80,8 @@ Rows whose names look like summaries are skipped, including coalition, oppositio
 - Hebrew labels are split by words and repositioned to reduce overlap.
 - Mandate numbers are rounded for display in the infographic.
 - The transparent-background toggle affects the exported canvas itself; the checkerboard pattern is only a preview background.
+- The canvas uses `FbPractica` for titles and `FbPracticaNarrow` for graph text. If those fonts are not installed, add licensed files under `fonts/` using the names documented in `fonts/README.md`.
+- The app checks canvas font availability at runtime and shows a warning if it falls back to another font.
 
 ## Browser Requirements
 
