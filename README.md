@@ -77,7 +77,7 @@ Rows whose names look like summaries are skipped, including coalition, oppositio
 - XLSX files are read client-side in `app.js` by parsing the ZIP container and internal XML files directly.
 - Deflated XLSX entries use the browser `DecompressionStream` API.
 - Chart output is rendered with the HTML canvas API.
-- Hebrew labels are split by words and repositioned to reduce overlap.
+- Hebrew labels are split by words and repositioned to reduce overlap, with an optional Excel-style diagonal mode for dense party names.
 - Mandate numbers are rounded for display in the infographic.
 - The transparent-background toggle affects the exported canvas itself; the checkerboard pattern is only a preview background.
 - The canvas uses `FbPractica` for titles and `FbPracticaNarrow` for graph text. If those fonts are not installed, add licensed files under `fonts/` using the names documented in `fonts/README.md`.

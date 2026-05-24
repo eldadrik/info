@@ -51,7 +51,10 @@ const DEFAULT_FONT_BOLD = {
   labels: false,
 };
 const DEFAULT_LABEL_COLUMN_GAP = 8;
-const LABEL_OVERLAP_MODES = new Set(["auto", "stacked", "single", "hide"]);
+const LABEL_DIAGONAL_ANGLE = -Math.PI / 4;
+const LABEL_DIAGONAL_SIN = Math.sin(Math.abs(LABEL_DIAGONAL_ANGLE));
+const LABEL_DIAGONAL_COS = Math.cos(Math.abs(LABEL_DIAGONAL_ANGLE));
+const LABEL_OVERLAP_MODES = new Set(["auto", "stacked", "diagonal", "single", "hide"]);
 const LABEL_DENSITY_SETTINGS = {
   compact: {
     labelPaddingRatio: 0.04,
@@ -860,13 +863,15 @@ function renderChart() {
     state.options.labelOverlap,
   );
   const labelLaneGap = Math.max(labelSettings.laneGapMin, labelFontSize * labelSettings.laneGapRatio);
-  const labelLaneMetrics = getLabelLaneMetrics(
-    labelMetrics,
-    labelLayout.lanes,
-    drawnLabelLineHeight,
-    labelLaneGap,
-    labelLayout.visible,
-  );
+  const labelLaneMetrics = labelLayout.diagonal
+    ? getDiagonalLabelLaneMetrics(labelMetrics, labelLayout.visible)
+    : getLabelLaneMetrics(
+        labelMetrics,
+        labelLayout.lanes,
+        drawnLabelLineHeight,
+        labelLaneGap,
+        labelLayout.visible,
+      );
   const labelTopGap = state.options.labelColumnGap;
   const labelBottomGap = Math.max(8, 3 * scale);
   const labelArea = Math.max(labelTopGap + labelLaneMetrics.totalHeight + labelBottomGap, 64);
@@ -909,14 +914,26 @@ function renderChart() {
     );
 
     if (labelLayout.visible[index]) {
-      drawPartyLabel(
-        ctx,
-        party.name,
-        labelLayout.centers[index],
-        barBase + labelTopGap + labelLaneMetrics.offsets[labelLayout.lanes[index]],
-        labelFontSize,
-        drawnLabelLineHeight,
-      );
+      const labelY = barBase + labelTopGap + labelLaneMetrics.offsets[labelLayout.lanes[index]];
+      if (labelLayout.diagonal) {
+        drawDiagonalPartyLabel(
+          ctx,
+          party.name,
+          labelLayout.centers[index],
+          labelY,
+          labelFontSize,
+          labelMetrics[index],
+        );
+      } else {
+        drawPartyLabel(
+          ctx,
+          party.name,
+          labelLayout.centers[index],
+          labelY,
+          labelFontSize,
+          drawnLabelLineHeight,
+        );
+      }
     }
   });
 
@@ -963,17 +980,33 @@ function measureLabelMetrics(ctx, data, fontSize, scale, settings) {
     scale * settings.labelPaddingScale,
   );
   const minimumSegmentWidth = Math.max(settings.minimumWidthMin, fontSize * settings.minimumWidthRatio);
+  const lineHeight = Math.max(settings.lineHeightMin, fontSize * settings.lineHeightRatio);
 
   ctx.font = `${getTextWeight("labels")} ${Math.max(8, Math.round(fontSize))}px ${GRAPH_FONT_FAMILY}`;
 
   return data.map((party) => {
-    const lines = getPartyLabelLines(party.name);
+    const label = cleanText(party.name);
+    const lines = getPartyLabelLines(label);
     const widestLine = Math.max(...lines.map((line) => ctx.measureText(line).width));
+    const singleLineWidth = ctx.measureText(label).width;
+    const diagonalBox = getDiagonalTextBox(singleLineWidth, lineHeight);
     return {
       lines,
+      label,
+      diagonalCenterOffset: diagonalBox.centerOffset,
+      diagonalHeight: Math.ceil(diagonalBox.height + labelPadding),
+      diagonalWidth: Math.max(minimumSegmentWidth, Math.ceil(diagonalBox.width + labelPadding)),
       width: Math.max(minimumSegmentWidth, Math.ceil(widestLine + labelPadding)),
     };
   });
+}
+
+function getDiagonalTextBox(textWidth, textHeight) {
+  return {
+    centerOffset: (textHeight * LABEL_DIAGONAL_SIN - textWidth * LABEL_DIAGONAL_COS) / 2,
+    height: textWidth * LABEL_DIAGONAL_SIN + textHeight * LABEL_DIAGONAL_COS,
+    width: textWidth * LABEL_DIAGONAL_COS + textHeight * LABEL_DIAGONAL_SIN,
+  };
 }
 
 function resolveLabelLayout(baseCenters, labelMetrics, minX, maxX, gap, mode) {
@@ -983,6 +1016,10 @@ function resolveLabelLayout(baseCenters, labelMetrics, minX, maxX, gap, mode) {
 
   if (mode === "stacked") {
     return resolveStackedLabelLayout(baseCenters, labelMetrics, minX, maxX, gap);
+  }
+
+  if (mode === "diagonal") {
+    return resolveDiagonalLabelLayout(baseCenters, labelMetrics, minX, maxX, gap);
   }
 
   if (mode === "hide") {
@@ -1031,6 +1068,19 @@ function resolveHiddenLabelLayout(baseCenters, labelMetrics, minX, maxX, gap) {
     centers,
     lanes: new Array(baseCenters.length).fill(0),
     visible,
+  };
+}
+
+function resolveDiagonalLabelLayout(baseCenters, labelMetrics, minX, maxX, gap) {
+  const diagonalMetrics = labelMetrics.map((metric) => ({
+    ...metric,
+    width: metric.diagonalWidth,
+  }));
+  return {
+    centers: resolveLabelCenters(baseCenters, diagonalMetrics, minX, maxX, gap),
+    lanes: new Array(baseCenters.length).fill(0),
+    visible: new Array(baseCenters.length).fill(true),
+    diagonal: true,
   };
 }
 
@@ -1174,6 +1224,20 @@ function getLabelLaneMetrics(labelMetrics, lanes, lineHeight, laneGap, visible) 
   };
 }
 
+function getDiagonalLabelLaneMetrics(labelMetrics, visible) {
+  const totalHeight = labelMetrics.reduce((height, metric, index) => {
+    if (visible[index] === false) {
+      return height;
+    }
+    return Math.max(height, metric.diagonalHeight);
+  }, 0);
+
+  return {
+    offsets: [0],
+    totalHeight,
+  };
+}
+
 function getPartyLabelLines(label) {
   const words = cleanText(label).split(/\s+/).filter(Boolean);
   return words.length ? words : [""];
@@ -1187,6 +1251,32 @@ function drawPartyLabel(ctx, label, centerX, firstLineY, fontSize, lineHeight) {
   getPartyLabelLines(label).forEach((line, index) => {
     ctx.fillText(line, centerX, firstLineY + index * lineHeight);
   });
+  ctx.textBaseline = previousBaseline;
+}
+
+function drawDiagonalPartyLabel(ctx, label, centerX, topY, fontSize, metric) {
+  const clean = metric?.label || cleanText(label);
+  if (!clean) {
+    return;
+  }
+
+  const previousDirection = ctx.direction;
+  const previousAlign = ctx.textAlign;
+  const previousBaseline = ctx.textBaseline;
+
+  ctx.save();
+  ctx.translate(centerX - (metric?.diagonalCenterOffset ?? 0), topY);
+  ctx.rotate(LABEL_DIAGONAL_ANGLE);
+  ctx.direction = "rtl";
+  ctx.textAlign = "right";
+  ctx.textBaseline = "top";
+  ctx.font = `${getTextWeight("labels")} ${Math.max(8, Math.round(fontSize))}px ${GRAPH_FONT_FAMILY}`;
+  ctx.fillStyle = TEXT_COLOR;
+  ctx.fillText(clean, 0, 0);
+  ctx.restore();
+
+  ctx.direction = previousDirection;
+  ctx.textAlign = previousAlign;
   ctx.textBaseline = previousBaseline;
 }
 
