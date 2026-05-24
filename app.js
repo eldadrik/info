@@ -54,6 +54,7 @@ const DEFAULT_LABEL_COLUMN_GAP = 8;
 const LABEL_DIAGONAL_ANGLE = -Math.PI / 4;
 const LABEL_DIAGONAL_SIN = Math.sin(Math.abs(LABEL_DIAGONAL_ANGLE));
 const LABEL_DIAGONAL_COS = Math.cos(Math.abs(LABEL_DIAGONAL_ANGLE));
+const LABEL_DIAGONAL_ANCHOR_WIDTH_RATIO = 0.55;
 const LABEL_OVERLAP_MODES = new Set(["auto", "stacked", "diagonal", "single", "hide"]);
 const LABEL_DENSITY_SETTINGS = {
   compact: {
@@ -995,7 +996,7 @@ function measureLabelMetrics(ctx, data, fontSize, scale, settings) {
       label,
       diagonalCenterOffset: diagonalBox.centerOffset,
       diagonalHeight: Math.ceil(diagonalBox.height + labelPadding),
-      diagonalWidth: Math.max(minimumSegmentWidth, Math.ceil(diagonalBox.width + labelPadding)),
+      diagonalAnchorWidth: Math.max(4, Math.ceil(lineHeight * LABEL_DIAGONAL_ANCHOR_WIDTH_RATIO)),
       width: Math.max(minimumSegmentWidth, Math.ceil(widestLine + labelPadding)),
     };
   });
@@ -1019,7 +1020,7 @@ function resolveLabelLayout(baseCenters, labelMetrics, minX, maxX, gap, mode) {
   }
 
   if (mode === "diagonal") {
-    return resolveDiagonalLabelLayout(baseCenters, labelMetrics, minX, maxX, gap);
+    return resolveDiagonalLabelLayout(baseCenters, labelMetrics, minX, maxX);
   }
 
   if (mode === "hide") {
@@ -1071,13 +1072,11 @@ function resolveHiddenLabelLayout(baseCenters, labelMetrics, minX, maxX, gap) {
   };
 }
 
-function resolveDiagonalLabelLayout(baseCenters, labelMetrics, minX, maxX, gap) {
-  const diagonalMetrics = labelMetrics.map((metric) => ({
-    ...metric,
-    width: metric.diagonalWidth,
-  }));
+function resolveDiagonalLabelLayout(baseCenters, labelMetrics, minX, maxX) {
   return {
-    centers: resolveLabelCenters(baseCenters, diagonalMetrics, minX, maxX, gap),
+    centers: baseCenters.map((center, index) =>
+      clampLabelCenter(center, minX, maxX, labelMetrics[index].diagonalAnchorWidth / 2),
+    ),
     lanes: new Array(baseCenters.length).fill(0),
     visible: new Array(baseCenters.length).fill(true),
     diagonal: true,
