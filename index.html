@@ -139,6 +139,41 @@
                 <input id="labelColumnGapInput" type="number" min="0" max="160" step="1" />
               </label>
             </div>
+            <h3 class="subsection-title">אלכסון</h3>
+            <div class="diagonal-layout-grid">
+              <label>
+                <span>זווית °</span>
+                <input id="labelDiagonalAngleInput" type="number" min="15" max="75" step="1" />
+              </label>
+              <label>
+                <span>יישור</span>
+                <select id="labelDiagonalAlignSelect">
+                  <option value="right">ימין</option>
+                  <option value="center">מרכז</option>
+                  <option value="left">שמאל</option>
+                </select>
+              </label>
+              <label>
+                <span>מרווח בסיסים</span>
+                <input id="labelDiagonalSpacingInput" type="number" min="0" max="80" step="1" />
+              </label>
+              <label>
+                <span>הזזה אופקית</span>
+                <input id="labelDiagonalOffsetXInput" type="number" min="-120" max="120" step="1" />
+              </label>
+              <label>
+                <span>הזזה אנכית</span>
+                <input id="labelDiagonalOffsetYInput" type="number" min="-80" max="120" step="1" />
+              </label>
+              <label>
+                <span>דירוג אנכי</span>
+                <input id="labelDiagonalStaggerInput" type="number" min="0" max="80" step="1" />
+              </label>
+              <label>
+                <span>שטח שמור %</span>
+                <input id="labelDiagonalReserveInput" type="number" min="40" max="180" step="1" />
+              </label>
+            </div>
           </section>
           <div class="table-title">
             <h2>מפלגות</h2>
@@ -150,6 +185,7 @@
                 <tr>
                   <th scope="col">שם</th>
                   <th scope="col">מנדטים</th>
+                  <th scope="col">מרחק תג</th>
                   <th scope="col"></th>
                 </tr>
               </thead>
@@ -163,7 +199,7 @@
             <span id="summaryText"></span>
           </div>
           <div class="canvas-stage">
-            <canvas id="chartCanvas" width="1200" height="580"></canvas>
+            <canvas id="chartCanvas" width="550" height="290"></canvas>
           </div>
         </section>
       </section>

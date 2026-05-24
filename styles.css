@@ -169,7 +169,8 @@ h2 {
 
 .field-grid label,
 .font-control > label:not(.bold-toggle),
-.label-layout-grid label {
+.label-layout-grid label,
+.diagonal-layout-grid label {
   display: grid;
   gap: 6px;
 }
@@ -182,6 +183,7 @@ h2 {
 .field-grid span,
 .font-grid span,
 .label-layout-grid span,
+.diagonal-layout-grid span,
 .toggles span {
   color: var(--muted);
   font-size: 13px;
@@ -197,6 +199,12 @@ select {
   background: #ffffff;
   color: var(--text);
   padding: 0 10px;
+}
+
+input:disabled,
+select:disabled {
+  background: #f2f4f6;
+  color: #8b96a3;
 }
 
 input:focus,
@@ -257,12 +265,30 @@ button:focus-visible {
   margin-top: 12px;
 }
 
+.subsection-title {
+  margin-top: 14px;
+  margin-bottom: 0;
+  font-size: 14px;
+}
+
+.diagonal-layout-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 10px;
+}
+
 .label-layout-grid label:last-child {
   grid-column: 1 / -1;
 }
 
+.diagonal-layout-grid label:last-child {
+  grid-column: 1 / -1;
+}
+
 .font-grid input[type="number"],
-.label-layout-grid input[type="number"] {
+.label-layout-grid input[type="number"],
+.diagonal-layout-grid input[type="number"] {
   direction: ltr;
   text-align: center;
   font-weight: 700;
@@ -316,7 +342,11 @@ td:first-child {
 }
 
 td:nth-child(2) {
-  width: 132px;
+  width: 96px;
+}
+
+td:nth-child(3) {
+  width: 104px;
 }
 
 td:last-child {
@@ -329,7 +359,8 @@ td input {
   min-width: 0;
 }
 
-td:nth-child(2) input {
+td:nth-child(2) input,
+td:nth-child(3) input {
   direction: ltr;
   text-align: center;
   font-weight: 700;
@@ -393,6 +424,21 @@ canvas {
   box-shadow: 0 10px 34px rgba(29, 37, 45, 0.16);
 }
 
+@media (min-width: 901px) {
+  .preview {
+    position: sticky;
+    top: 16px;
+    display: flex;
+    flex-direction: column;
+    max-height: calc(100vh - 32px);
+  }
+
+  .preview .canvas-stage {
+    flex: 1 1 auto;
+    min-height: 0;
+  }
+}
+
 @media (max-width: 900px) {
   .app-shell {
     width: min(100vw - 20px, 760px);
@@ -425,7 +471,8 @@ canvas {
     grid-template-columns: 1fr;
   }
 
-  .label-layout-grid {
+  .label-layout-grid,
+  .diagonal-layout-grid {
     grid-template-columns: 1fr;
   }
 

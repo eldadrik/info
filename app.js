@@ -35,10 +35,10 @@ const FONT_WEIGHTS = {
   bold: 800,
 };
 const DEFAULT_FONT_SIZES = {
-  title: 44,
-  subtitle: 35,
-  numbers: 24,
-  labels: 26,
+  title: 22,
+  subtitle: 17,
+  numbers: 12,
+  labels: 13,
 };
 const LAYOUT_FONT_SIZES = {
   numbers: 24,
@@ -50,10 +50,20 @@ const DEFAULT_FONT_BOLD = {
   numbers: true,
   labels: false,
 };
+const DEFAULT_CANVAS_WIDTH = 550;
+const DEFAULT_CANVAS_HEIGHT = 290;
 const DEFAULT_LABEL_COLUMN_GAP = 8;
-const LABEL_DIAGONAL_ANGLE = -Math.PI / 4;
-const LABEL_DIAGONAL_SIN = Math.sin(Math.abs(LABEL_DIAGONAL_ANGLE));
-const LABEL_DIAGONAL_COS = Math.cos(Math.abs(LABEL_DIAGONAL_ANGLE));
+const DEFAULT_PARTY_LABEL_DISTANCE = 0;
+const DEFAULT_LABEL_DIAGONAL = {
+  angle: 45,
+  align: "right",
+  spacing: 0,
+  offsetX: 0,
+  offsetY: 0,
+  stagger: 0,
+  reserve: 100,
+};
+const LABEL_DIAGONAL_ALIGN_MODES = new Set(["right", "center", "left"]);
 const LABEL_DIAGONAL_ANCHOR_WIDTH_RATIO = 0.55;
 const LABEL_OVERLAP_MODES = new Set(["auto", "stacked", "diagonal", "single", "hide"]);
 const LABEL_DENSITY_SETTINGS = {
@@ -126,11 +136,12 @@ const state = {
   options: {
     sort: true,
     transparent: true,
-    width: 1200,
-    height: 580,
-    labelOverlap: "auto",
+    width: DEFAULT_CANVAS_WIDTH,
+    height: DEFAULT_CANVAS_HEIGHT,
+    labelOverlap: "diagonal",
     labelDensity: "balanced",
     labelColumnGap: DEFAULT_LABEL_COLUMN_GAP,
+    labelDiagonal: { ...DEFAULT_LABEL_DIAGONAL },
     fontSizes: { ...DEFAULT_FONT_SIZES },
     fontBold: { ...DEFAULT_FONT_BOLD },
   },
@@ -154,6 +165,13 @@ const els = {
   labelOverlapSelect: document.querySelector("#labelOverlapSelect"),
   labelDensitySelect: document.querySelector("#labelDensitySelect"),
   labelColumnGapInput: document.querySelector("#labelColumnGapInput"),
+  labelDiagonalAngleInput: document.querySelector("#labelDiagonalAngleInput"),
+  labelDiagonalAlignSelect: document.querySelector("#labelDiagonalAlignSelect"),
+  labelDiagonalSpacingInput: document.querySelector("#labelDiagonalSpacingInput"),
+  labelDiagonalOffsetXInput: document.querySelector("#labelDiagonalOffsetXInput"),
+  labelDiagonalOffsetYInput: document.querySelector("#labelDiagonalOffsetYInput"),
+  labelDiagonalStaggerInput: document.querySelector("#labelDiagonalStaggerInput"),
+  labelDiagonalReserveInput: document.querySelector("#labelDiagonalReserveInput"),
   titleBoldInput: document.querySelector("#titleBoldInput"),
   subtitleBoldInput: document.querySelector("#subtitleBoldInput"),
   numberBoldInput: document.querySelector("#numberBoldInput"),
@@ -509,7 +527,7 @@ function extractSheetData(sheet, workbook) {
         : averageNumericCells(row, header.nameColumn, valueMode.columns);
 
     if (Number.isFinite(value) && value >= 0) {
-      parties.push({ name, value });
+      parties.push({ name, value, labelDistance: DEFAULT_PARTY_LABEL_DISTANCE });
     }
   }
 
@@ -692,12 +710,35 @@ function syncControls() {
   els.labelOverlapSelect.value = state.options.labelOverlap;
   els.labelDensitySelect.value = state.options.labelDensity;
   els.labelColumnGapInput.value = state.options.labelColumnGap;
+  els.labelDiagonalAngleInput.value = state.options.labelDiagonal.angle;
+  els.labelDiagonalAlignSelect.value = state.options.labelDiagonal.align;
+  els.labelDiagonalSpacingInput.value = state.options.labelDiagonal.spacing;
+  els.labelDiagonalOffsetXInput.value = state.options.labelDiagonal.offsetX;
+  els.labelDiagonalOffsetYInput.value = state.options.labelDiagonal.offsetY;
+  els.labelDiagonalStaggerInput.value = state.options.labelDiagonal.stagger;
+  els.labelDiagonalReserveInput.value = state.options.labelDiagonal.reserve;
   els.titleBoldInput.checked = state.options.fontBold.title;
   els.subtitleBoldInput.checked = state.options.fontBold.subtitle;
   els.numberBoldInput.checked = state.options.fontBold.numbers;
   els.partyLabelBoldInput.checked = state.options.fontBold.labels;
   els.sortToggle.checked = state.options.sort;
   els.transparentToggle.checked = state.options.transparent;
+  updateDiagonalControlState();
+}
+
+function updateDiagonalControlState() {
+  const enabled = els.labelOverlapSelect.value === "diagonal";
+  for (const control of [
+    els.labelDiagonalAngleInput,
+    els.labelDiagonalAlignSelect,
+    els.labelDiagonalSpacingInput,
+    els.labelDiagonalOffsetXInput,
+    els.labelDiagonalOffsetYInput,
+    els.labelDiagonalStaggerInput,
+    els.labelDiagonalReserveInput,
+  ]) {
+    control.disabled = !enabled;
+  }
 }
 
 function renderPartyTable() {
@@ -728,6 +769,18 @@ function renderPartyTable() {
     valueInput.setAttribute("aria-label", "מספר מנדטים");
     valueCell.append(valueInput);
 
+    const labelDistanceCell = document.createElement("td");
+    const labelDistanceInput = document.createElement("input");
+    labelDistanceInput.type = "number";
+    labelDistanceInput.min = "-160";
+    labelDistanceInput.max = "160";
+    labelDistanceInput.step = "1";
+    labelDistanceInput.value = formatEditableNumber(party.labelDistance ?? DEFAULT_PARTY_LABEL_DISTANCE);
+    labelDistanceInput.dir = "ltr";
+    labelDistanceInput.dataset.field = "labelDistance";
+    labelDistanceInput.setAttribute("aria-label", "מרחק תג מהמפלגות הסמוכות");
+    labelDistanceCell.append(labelDistanceInput);
+
     const actionCell = document.createElement("td");
     const removeButton = document.createElement("button");
     removeButton.type = "button";
@@ -738,7 +791,7 @@ function renderPartyTable() {
     removeButton.textContent = "×";
     actionCell.append(removeButton);
 
-    row.append(nameCell, valueCell, actionCell);
+    row.append(nameCell, valueCell, labelDistanceCell, actionCell);
     fragment.append(row);
   });
 
@@ -752,8 +805,8 @@ function renderChart() {
   state.meta.date = els.dateInput.value.trim();
   state.options.sort = els.sortToggle.checked;
   state.options.transparent = els.transparentToggle.checked;
-  state.options.width = clamp(Number(els.widthInput.value) || 1200, 420, 5000);
-  state.options.height = clamp(Number(els.heightInput.value) || 620, 240, 1400);
+  state.options.width = clamp(Number(els.widthInput.value) || DEFAULT_CANVAS_WIDTH, 420, 5000);
+  state.options.height = clamp(Number(els.heightInput.value) || DEFAULT_CANVAS_HEIGHT, 240, 1400);
   state.options.fontSizes = {
     title: readFontSize(els.titleFontSizeInput, DEFAULT_FONT_SIZES.title, 12, 96),
     subtitle: readFontSize(els.subtitleFontSizeInput, DEFAULT_FONT_SIZES.subtitle, 10, 72),
@@ -768,6 +821,16 @@ function renderChart() {
     0,
     160,
   );
+  state.options.labelDiagonal = {
+    angle: readNumberInput(els.labelDiagonalAngleInput, DEFAULT_LABEL_DIAGONAL.angle, 15, 75),
+    align: readSelectValue(els.labelDiagonalAlignSelect, LABEL_DIAGONAL_ALIGN_MODES, DEFAULT_LABEL_DIAGONAL.align),
+    spacing: readNumberInput(els.labelDiagonalSpacingInput, DEFAULT_LABEL_DIAGONAL.spacing, 0, 80),
+    offsetX: readNumberInput(els.labelDiagonalOffsetXInput, DEFAULT_LABEL_DIAGONAL.offsetX, -120, 120),
+    offsetY: readNumberInput(els.labelDiagonalOffsetYInput, DEFAULT_LABEL_DIAGONAL.offsetY, -80, 120),
+    stagger: readNumberInput(els.labelDiagonalStaggerInput, DEFAULT_LABEL_DIAGONAL.stagger, 0, 80),
+    reserve: readNumberInput(els.labelDiagonalReserveInput, DEFAULT_LABEL_DIAGONAL.reserve, 40, 180),
+  };
+  updateDiagonalControlState();
   state.options.fontBold = {
     title: els.titleBoldInput.checked,
     subtitle: els.subtitleBoldInput.checked,
@@ -786,7 +849,7 @@ function renderChart() {
   let ctx = canvas.getContext("2d");
   let width = canvas.width;
   const height = canvas.height;
-  let scale = Math.min(width / 550, height / 298);
+  let scale = Math.min(width / DEFAULT_CANVAS_WIDTH, height / DEFAULT_CANVAS_HEIGHT);
   const data = getRenderableParties();
 
   let titleFontSize = state.options.fontSizes.title;
@@ -797,7 +860,10 @@ function renderChart() {
   let subtitleY = titleY + 22 * scale;
   let sidePadding = Math.max(16, 14 * scale);
   const labelSettings = getLabelDensitySettings(state.options.labelDensity);
-  let labelMetrics = data.length ? measureLabelMetrics(ctx, data, labelFontSize, scale, labelSettings) : [];
+  const diagonalGeometry = getDiagonalGeometry(state.options.labelDiagonal);
+  let labelMetrics = data.length
+    ? measureLabelMetrics(ctx, data, labelFontSize, scale, labelSettings, diagonalGeometry)
+    : [];
 
   ctx.clearRect(0, 0, width, height);
   if (!state.options.transparent) {
@@ -862,10 +928,11 @@ function renderChart() {
     width,
     labelGap,
     state.options.labelOverlap,
+    state.options.labelDiagonal,
   );
   const labelLaneGap = Math.max(labelSettings.laneGapMin, labelFontSize * labelSettings.laneGapRatio);
   const labelLaneMetrics = labelLayout.diagonal
-    ? getDiagonalLabelLaneMetrics(labelMetrics, labelLayout.visible)
+    ? getDiagonalLabelLaneMetrics(labelMetrics, labelLayout.visible, state.options.labelDiagonal)
     : getLabelLaneMetrics(
         labelMetrics,
         labelLayout.lanes,
@@ -924,6 +991,9 @@ function renderChart() {
           labelY,
           labelFontSize,
           labelMetrics[index],
+          state.options.labelDiagonal,
+          diagonalGeometry,
+          index,
         );
       } else {
         drawPartyLabel(
@@ -946,6 +1016,7 @@ function getRenderableParties() {
     .map((party) => ({
       name: cleanText(party.name),
       value: Math.max(0, parseNumber(party.value)),
+      labelDistance: clamp(parseNumber(party.labelDistance), -160, 160) || DEFAULT_PARTY_LABEL_DISTANCE,
     }))
     .filter((party) => party.name && Number.isFinite(party.value));
 
@@ -974,7 +1045,7 @@ function drawFittedText(ctx, text, x, y, maxWidth, startSize, minSize, weight, f
   ctx.fillText(clean, x, y);
 }
 
-function measureLabelMetrics(ctx, data, fontSize, scale, settings) {
+function measureLabelMetrics(ctx, data, fontSize, scale, settings, diagonalGeometry) {
   const labelPadding = Math.max(
     settings.labelPaddingMin,
     fontSize * settings.labelPaddingRatio,
@@ -990,10 +1061,11 @@ function measureLabelMetrics(ctx, data, fontSize, scale, settings) {
     const lines = getPartyLabelLines(label);
     const widestLine = Math.max(...lines.map((line) => ctx.measureText(line).width));
     const singleLineWidth = ctx.measureText(label).width;
-    const diagonalBox = getDiagonalTextBox(singleLineWidth, lineHeight);
+    const diagonalBox = getDiagonalTextBox(singleLineWidth, lineHeight, diagonalGeometry);
     return {
       lines,
       label,
+      labelDistance: party.labelDistance || DEFAULT_PARTY_LABEL_DISTANCE,
       diagonalCenterOffset: diagonalBox.centerOffset,
       diagonalHeight: Math.ceil(diagonalBox.height + labelPadding),
       diagonalAnchorWidth: Math.max(4, Math.ceil(lineHeight * LABEL_DIAGONAL_ANCHOR_WIDTH_RATIO)),
@@ -1002,15 +1074,44 @@ function measureLabelMetrics(ctx, data, fontSize, scale, settings) {
   });
 }
 
-function getDiagonalTextBox(textWidth, textHeight) {
+function getDiagonalGeometry(options) {
+  const angle = clamp(Number(options?.angle) || DEFAULT_LABEL_DIAGONAL.angle, 15, 75);
+  const radians = (-angle * Math.PI) / 180;
+  const absRadians = Math.abs(radians);
+  const align = LABEL_DIAGONAL_ALIGN_MODES.has(options?.align) ? options.align : DEFAULT_LABEL_DIAGONAL.align;
+
   return {
-    centerOffset: (textHeight * LABEL_DIAGONAL_SIN - textWidth * LABEL_DIAGONAL_COS) / 2,
-    height: textWidth * LABEL_DIAGONAL_SIN + textHeight * LABEL_DIAGONAL_COS,
-    width: textWidth * LABEL_DIAGONAL_COS + textHeight * LABEL_DIAGONAL_SIN,
+    angle,
+    radians,
+    align,
+    sin: Math.sin(absRadians),
+    cos: Math.cos(absRadians),
   };
 }
 
-function resolveLabelLayout(baseCenters, labelMetrics, minX, maxX, gap, mode) {
+function getDiagonalTextBox(textWidth, textHeight, geometry) {
+  const alignOffset = getDiagonalAlignOffset(textWidth, geometry.align);
+
+  return {
+    centerOffset: alignOffset * geometry.cos + (textHeight * geometry.sin) / 2,
+    height: textWidth * geometry.sin + textHeight * geometry.cos,
+    width: textWidth * geometry.cos + textHeight * geometry.sin,
+  };
+}
+
+function getDiagonalAlignOffset(textWidth, align) {
+  if (align === "left") {
+    return textWidth / 2;
+  }
+
+  if (align === "center") {
+    return 0;
+  }
+
+  return -textWidth / 2;
+}
+
+function resolveLabelLayout(baseCenters, labelMetrics, minX, maxX, gap, mode, diagonalOptions) {
   if (mode === "single") {
     return resolveSingleRowLabelLayout(baseCenters, labelMetrics, minX, maxX);
   }
@@ -1020,7 +1121,7 @@ function resolveLabelLayout(baseCenters, labelMetrics, minX, maxX, gap, mode) {
   }
 
   if (mode === "diagonal") {
-    return resolveDiagonalLabelLayout(baseCenters, labelMetrics, minX, maxX);
+    return resolveDiagonalLabelLayout(baseCenters, labelMetrics, minX, maxX, diagonalOptions);
   }
 
   if (mode === "hide") {
@@ -1072,11 +1173,17 @@ function resolveHiddenLabelLayout(baseCenters, labelMetrics, minX, maxX, gap) {
   };
 }
 
-function resolveDiagonalLabelLayout(baseCenters, labelMetrics, minX, maxX) {
+function resolveDiagonalLabelLayout(baseCenters, labelMetrics, minX, maxX, diagonalOptions) {
+  const anchorSpacing = Math.max(0, Number(diagonalOptions?.spacing) || 0);
+  const diagonalMetrics = labelMetrics.map((metric) => ({
+    width: metric.diagonalAnchorWidth + anchorSpacing,
+  }));
+  const adjustedCenters = baseCenters.map(
+    (center, index) => center + (labelMetrics[index].labelDistance || DEFAULT_PARTY_LABEL_DISTANCE),
+  );
+
   return {
-    centers: baseCenters.map((center, index) =>
-      clampLabelCenter(center, minX, maxX, labelMetrics[index].diagonalAnchorWidth / 2),
-    ),
+    centers: resolveLabelCenters(adjustedCenters, diagonalMetrics, minX, maxX, 0),
     lanes: new Array(baseCenters.length).fill(0),
     visible: new Array(baseCenters.length).fill(true),
     diagonal: true,
@@ -1223,13 +1330,17 @@ function getLabelLaneMetrics(labelMetrics, lanes, lineHeight, laneGap, visible) 
   };
 }
 
-function getDiagonalLabelLaneMetrics(labelMetrics, visible) {
-  const totalHeight = labelMetrics.reduce((height, metric, index) => {
+function getDiagonalLabelLaneMetrics(labelMetrics, visible, diagonalOptions) {
+  const reserveRatio = Math.max(0.4, (Number(diagonalOptions.reserve) || DEFAULT_LABEL_DIAGONAL.reserve) / 100);
+  const offsetY = Number(diagonalOptions.offsetY) || 0;
+  const stagger = Number(diagonalOptions.stagger) || 0;
+  const baseHeight = labelMetrics.reduce((height, metric, index) => {
     if (visible[index] === false) {
       return height;
     }
     return Math.max(height, metric.diagonalHeight);
   }, 0);
+  const totalHeight = Math.ceil(baseHeight * reserveRatio + Math.max(0, offsetY) + Math.max(0, stagger));
 
   return {
     offsets: [0],
@@ -1253,21 +1364,25 @@ function drawPartyLabel(ctx, label, centerX, firstLineY, fontSize, lineHeight) {
   ctx.textBaseline = previousBaseline;
 }
 
-function drawDiagonalPartyLabel(ctx, label, centerX, topY, fontSize, metric) {
+function drawDiagonalPartyLabel(ctx, label, centerX, topY, fontSize, metric, diagonalOptions, diagonalGeometry, index) {
   const clean = metric?.label || cleanText(label);
   if (!clean) {
     return;
   }
+  const offsetX = Number(diagonalOptions.offsetX) || 0;
+  const offsetY = Number(diagonalOptions.offsetY) || 0;
+  const stagger = Number(diagonalOptions.stagger) || 0;
+  const staggerY = stagger && index % 2 ? stagger : 0;
 
   const previousDirection = ctx.direction;
   const previousAlign = ctx.textAlign;
   const previousBaseline = ctx.textBaseline;
 
   ctx.save();
-  ctx.translate(centerX - (metric?.diagonalCenterOffset ?? 0), topY);
-  ctx.rotate(LABEL_DIAGONAL_ANGLE);
+  ctx.translate(centerX + offsetX - (metric?.diagonalCenterOffset ?? 0), topY + offsetY + staggerY);
+  ctx.rotate(diagonalGeometry.radians);
   ctx.direction = "rtl";
-  ctx.textAlign = "right";
+  ctx.textAlign = diagonalGeometry.align;
   ctx.textBaseline = "top";
   ctx.font = `${getTextWeight("labels")} ${Math.max(8, Math.round(fontSize))}px ${GRAPH_FONT_FAMILY}`;
   ctx.fillStyle = TEXT_COLOR;
@@ -1505,6 +1620,12 @@ for (const input of [
   els.numberFontSizeInput,
   els.partyLabelFontSizeInput,
   els.labelColumnGapInput,
+  els.labelDiagonalAngleInput,
+  els.labelDiagonalSpacingInput,
+  els.labelDiagonalOffsetXInput,
+  els.labelDiagonalOffsetYInput,
+  els.labelDiagonalStaggerInput,
+  els.labelDiagonalReserveInput,
 ]) {
   input.addEventListener("input", renderChart);
 }
@@ -1514,6 +1635,7 @@ for (const input of [
   els.transparentToggle,
   els.labelOverlapSelect,
   els.labelDensitySelect,
+  els.labelDiagonalAlignSelect,
   els.titleBoldInput,
   els.subtitleBoldInput,
   els.numberBoldInput,
@@ -1537,6 +1659,9 @@ els.partyTable.addEventListener("input", (event) => {
   if (field === "value") {
     state.parties[index].value = parseNumber(input.value);
   }
+  if (field === "labelDistance") {
+    state.parties[index].labelDistance = clamp(parseNumber(input.value), -160, 160) || DEFAULT_PARTY_LABEL_DISTANCE;
+  }
   renderChart();
 });
 
@@ -1553,7 +1678,7 @@ els.partyTable.addEventListener("click", (event) => {
 });
 
 els.addRowButton.addEventListener("click", () => {
-  state.parties.push({ name: "מפלגה חדשה", value: 0 });
+  state.parties.push({ name: "מפלגה חדשה", value: 0, labelDistance: DEFAULT_PARTY_LABEL_DISTANCE });
   renderPartyTable();
   renderChart();
 });
