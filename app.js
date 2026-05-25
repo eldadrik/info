@@ -47,7 +47,7 @@ const LAYOUT_FONT_SIZES = {
 const DEFAULT_FONT_BOLD = {
   title: true,
   subtitle: false,
-  numbers: true,
+  numbers: false,
   labels: false,
 };
 const DEFAULT_CANVAS_WIDTH = 550;
