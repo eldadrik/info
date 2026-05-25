@@ -282,7 +282,8 @@ button:focus-visible {
   grid-column: 1 / -1;
 }
 
-.diagonal-layout-grid label:last-child {
+.diagonal-layout-grid label:last-child,
+.diagonal-layout-grid .full-row-control {
   grid-column: 1 / -1;
 }
 
@@ -312,6 +313,21 @@ button:focus-visible {
 }
 
 .bold-toggle input {
+  width: 16px;
+  height: 16px;
+  accent-color: var(--accent);
+}
+
+.diagonal-toggle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: 7px;
+  min-height: 42px;
+  grid-column: 1 / -1;
+}
+
+.diagonal-toggle input {
   width: 16px;
   height: 16px;
   accent-color: var(--accent);

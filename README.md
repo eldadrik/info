@@ -79,6 +79,7 @@ Rows whose names look like summaries are skipped, including coalition, oppositio
 - Chart output is rendered with the HTML canvas API.
 - Hebrew labels are split by words and repositioned to reduce overlap, with an optional Excel-style diagonal mode for dense party names.
 - Diagonal party labels can be tuned by angle, alignment, anchor spacing, horizontal and vertical offsets, stagger, and reserved label area.
+- Diagonal party labels can optionally split each word onto its own rotated line to reduce the reserved label height for long names.
 - Each party row has an individual tag-distance value for separating one diagonal label from its neighbors without changing the full layout.
 - Mandate numbers are rounded for display in the infographic.
 - The transparent-background toggle affects the exported canvas itself; the checkerboard pattern is only a preview background.

@@ -35,10 +35,10 @@ const FONT_WEIGHTS = {
   bold: 800,
 };
 const DEFAULT_FONT_SIZES = {
-  title: 22,
-  subtitle: 17,
-  numbers: 12,
-  labels: 13,
+  title: 30,
+  subtitle: 28,
+  numbers: 16,
+  labels: 17,
 };
 const LAYOUT_FONT_SIZES = {
   numbers: 24,
@@ -52,9 +52,21 @@ const DEFAULT_FONT_BOLD = {
 };
 const DEFAULT_CANVAS_WIDTH = 550;
 const DEFAULT_CANVAS_HEIGHT = 580;
-const DEFAULT_TITLE_SUBTITLE_GAP = 22;
+const DEFAULT_TITLE_SUBTITLE_GAP = 31;
 const DEFAULT_LABEL_COLUMN_GAP = 8;
 const DEFAULT_PARTY_LABEL_DISTANCE = 0;
+const DEFAULT_PARTY_LABEL_DISTANCES = new Map([
+  ["ביחד", 2],
+  ["ישר", 6],
+  ["הרשימה המשותפת", -21],
+  ['ש"ס', 3],
+  ["הדמוקרטים", -10],
+  ["עוצמה יהודית", -10],
+  ["ישראל ביתנו", 4],
+  ["יהדות התורה", 4],
+  ["הציונות הדתית", -7],
+  ["המילואימניקים", -6],
+]);
 const DEFAULT_LABEL_DIAGONAL = {
   angle: 45,
   align: "right",
@@ -63,6 +75,7 @@ const DEFAULT_LABEL_DIAGONAL = {
   offsetY: 0,
   stagger: 0,
   reserve: 100,
+  breakLines: false,
 };
 const LABEL_DIAGONAL_ALIGN_MODES = new Set(["right", "center", "left"]);
 const LABEL_DIAGONAL_ANCHOR_WIDTH_RATIO = 0.55;
@@ -123,7 +136,7 @@ const defaultParties = [
   { name: "הציונות הדתית", value: 2 },
   { name: "המילואימניקים", value: 0 },
   { name: "כחול לבן", value: 0 },
-];
+].map((party) => ({ ...party, labelDistance: getDefaultPartyLabelDistance(party.name) }));
 
 const state = {
   workbook: null,
@@ -175,6 +188,7 @@ const els = {
   labelDiagonalOffsetYInput: document.querySelector("#labelDiagonalOffsetYInput"),
   labelDiagonalStaggerInput: document.querySelector("#labelDiagonalStaggerInput"),
   labelDiagonalReserveInput: document.querySelector("#labelDiagonalReserveInput"),
+  labelDiagonalBreakLinesInput: document.querySelector("#labelDiagonalBreakLinesInput"),
   titleBoldInput: document.querySelector("#titleBoldInput"),
   subtitleBoldInput: document.querySelector("#subtitleBoldInput"),
   numberBoldInput: document.querySelector("#numberBoldInput"),
@@ -530,7 +544,7 @@ function extractSheetData(sheet, workbook) {
         : averageNumericCells(row, header.nameColumn, valueMode.columns);
 
     if (Number.isFinite(value) && value >= 0) {
-      parties.push({ name, value, labelDistance: DEFAULT_PARTY_LABEL_DISTANCE });
+      parties.push({ name, value, labelDistance: getDefaultPartyLabelDistance(name) });
     }
   }
 
@@ -677,6 +691,14 @@ function cleanText(value) {
   return String(value ?? "").replace(/\s+/g, " ").trim();
 }
 
+function normalizePartyDistanceKey(name) {
+  return cleanText(name).replace(/[״“”]/g, '"');
+}
+
+function getDefaultPartyLabelDistance(name) {
+  return DEFAULT_PARTY_LABEL_DISTANCES.get(normalizePartyDistanceKey(name)) ?? DEFAULT_PARTY_LABEL_DISTANCE;
+}
+
 function formatValue(value) {
   if (typeof value === "number") {
     return Number.isInteger(value) ? String(value) : String(Number(value.toFixed(3))).replace(/\.0$/, "");
@@ -721,6 +743,7 @@ function syncControls() {
   els.labelDiagonalOffsetYInput.value = state.options.labelDiagonal.offsetY;
   els.labelDiagonalStaggerInput.value = state.options.labelDiagonal.stagger;
   els.labelDiagonalReserveInput.value = state.options.labelDiagonal.reserve;
+  els.labelDiagonalBreakLinesInput.checked = state.options.labelDiagonal.breakLines;
   els.titleBoldInput.checked = state.options.fontBold.title;
   els.subtitleBoldInput.checked = state.options.fontBold.subtitle;
   els.numberBoldInput.checked = state.options.fontBold.numbers;
@@ -740,6 +763,7 @@ function updateDiagonalControlState() {
     els.labelDiagonalOffsetYInput,
     els.labelDiagonalStaggerInput,
     els.labelDiagonalReserveInput,
+    els.labelDiagonalBreakLinesInput,
   ]) {
     control.disabled = !enabled;
   }
@@ -839,6 +863,7 @@ function renderChart() {
     offsetY: readNumberInput(els.labelDiagonalOffsetYInput, DEFAULT_LABEL_DIAGONAL.offsetY, -80, 120),
     stagger: readNumberInput(els.labelDiagonalStaggerInput, DEFAULT_LABEL_DIAGONAL.stagger, 0, 80),
     reserve: readNumberInput(els.labelDiagonalReserveInput, DEFAULT_LABEL_DIAGONAL.reserve, 40, 180),
+    breakLines: els.labelDiagonalBreakLinesInput.checked,
   };
   updateDiagonalControlState();
   state.options.fontBold = {
@@ -872,7 +897,7 @@ function renderChart() {
   const labelSettings = getLabelDensitySettings(state.options.labelDensity);
   const diagonalGeometry = getDiagonalGeometry(state.options.labelDiagonal);
   let labelMetrics = data.length
-    ? measureLabelMetrics(ctx, data, labelFontSize, scale, labelSettings, diagonalGeometry)
+    ? measureLabelMetrics(ctx, data, labelFontSize, scale, labelSettings, diagonalGeometry, state.options.labelDiagonal)
     : [];
 
   ctx.clearRect(0, 0, width, height);
@@ -1055,7 +1080,7 @@ function drawFittedText(ctx, text, x, y, maxWidth, startSize, minSize, weight, f
   ctx.fillText(clean, x, y);
 }
 
-function measureLabelMetrics(ctx, data, fontSize, scale, settings, diagonalGeometry) {
+function measureLabelMetrics(ctx, data, fontSize, scale, settings, diagonalGeometry, diagonalOptions) {
   const labelPadding = Math.max(
     settings.labelPaddingMin,
     fontSize * settings.labelPaddingRatio,
@@ -1070,11 +1095,16 @@ function measureLabelMetrics(ctx, data, fontSize, scale, settings, diagonalGeome
     const label = cleanText(party.name);
     const lines = getPartyLabelLines(label);
     const widestLine = Math.max(...lines.map((line) => ctx.measureText(line).width));
-    const singleLineWidth = ctx.measureText(label).width;
-    const diagonalBox = getDiagonalTextBox(singleLineWidth, lineHeight, diagonalGeometry);
+    const diagonalLines = diagonalOptions.breakLines ? lines : [label];
+    const diagonalLineWidths = diagonalLines.map((line) => ctx.measureText(line).width);
+    const diagonalTextWidth = Math.max(...diagonalLineWidths, 0);
+    const diagonalTextHeight = Math.max(lineHeight, diagonalLines.length * lineHeight);
+    const diagonalBox = getDiagonalTextBox(diagonalTextWidth, diagonalTextHeight, diagonalGeometry);
     return {
       lines,
       label,
+      diagonalLines,
+      diagonalLineHeight: lineHeight,
       labelDistance: party.labelDistance || DEFAULT_PARTY_LABEL_DISTANCE,
       diagonalCenterOffset: diagonalBox.centerOffset,
       diagonalHeight: Math.ceil(diagonalBox.height + labelPadding),
@@ -1381,6 +1411,8 @@ function drawDiagonalPartyLabel(ctx, label, centerX, topY, fontSize, metric, dia
   if (!clean) {
     return;
   }
+  const lines = metric?.diagonalLines?.length ? metric.diagonalLines : [clean];
+  const lineHeight = metric?.diagonalLineHeight || fontSize * 1.12;
   const offsetX = Number(diagonalOptions.offsetX) || 0;
   const offsetY = Number(diagonalOptions.offsetY) || 0;
   const stagger = Number(diagonalOptions.stagger) || 0;
@@ -1398,7 +1430,9 @@ function drawDiagonalPartyLabel(ctx, label, centerX, topY, fontSize, metric, dia
   ctx.textBaseline = "top";
   ctx.font = `${getTextWeight("labels")} ${Math.max(8, Math.round(fontSize))}px ${GRAPH_FONT_FAMILY}`;
   ctx.fillStyle = TEXT_COLOR;
-  ctx.fillText(clean, 0, 0);
+  lines.forEach((line, lineIndex) => {
+    ctx.fillText(line, 0, lineIndex * lineHeight);
+  });
   ctx.restore();
 
   ctx.direction = previousDirection;
@@ -1649,6 +1683,7 @@ for (const input of [
   els.labelOverlapSelect,
   els.labelDensitySelect,
   els.labelDiagonalAlignSelect,
+  els.labelDiagonalBreakLinesInput,
   els.titleBoldInput,
   els.subtitleBoldInput,
   els.numberBoldInput,
