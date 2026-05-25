@@ -299,6 +299,10 @@ button:focus-visible {
   gap: 7px;
 }
 
+.spacing-control {
+  grid-column: 1 / -1;
+}
+
 .bold-toggle {
   display: inline-flex;
   align-items: center;
@@ -399,7 +403,9 @@ td:nth-child(3) input {
 .canvas-stage {
   min-height: 610px;
   display: grid;
-  place-items: center;
+  place-items: start center;
+  align-items: safe center;
+  justify-items: safe center;
   overflow: auto;
   padding: 34px;
   background:

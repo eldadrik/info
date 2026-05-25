@@ -36,7 +36,7 @@ http://localhost:8000/
 1. Load the sample workbook with `טען דוגמה`, or import a new workbook with `בחר XLSX`.
 2. Select the relevant sheet.
 3. Review and edit the title, subtitle, date, party names, and mandate values.
-4. Adjust PNG dimensions, sorting, transparent background, font sizes, bold settings, and party-label layout.
+4. Adjust PNG dimensions, sorting, transparent background, font sizes, headline spacing, bold settings, and party-label layout.
 5. Check the canvas preview.
 6. Export with `ייצוא PNG`.
 

@@ -69,7 +69,7 @@
           </div>
 
           <section class="font-section" aria-labelledby="fontSectionTitle">
-            <h2 id="fontSectionTitle">גדלי טקסט</h2>
+            <h2 id="fontSectionTitle">גדלי טקסט ומרווחים</h2>
             <div class="font-grid">
               <div class="font-control">
                 <label for="titleFontSizeInput">
@@ -89,6 +89,12 @@
                 <label class="bold-toggle">
                   <input id="subtitleBoldInput" type="checkbox" />
                   <span>מודגש</span>
+                </label>
+              </div>
+              <div class="font-control spacing-control">
+                <label for="titleSubtitleGapInput">
+                  <span>מרווח בין כותרות</span>
+                  <input id="titleSubtitleGapInput" type="number" min="0" max="220" step="1" />
                 </label>
               </div>
               <div class="font-control">
@@ -199,7 +205,7 @@
             <span id="summaryText"></span>
           </div>
           <div class="canvas-stage">
-            <canvas id="chartCanvas" width="550" height="290"></canvas>
+            <canvas id="chartCanvas" width="550" height="580"></canvas>
           </div>
         </section>
       </section>

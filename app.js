@@ -51,7 +51,8 @@ const DEFAULT_FONT_BOLD = {
   labels: false,
 };
 const DEFAULT_CANVAS_WIDTH = 550;
-const DEFAULT_CANVAS_HEIGHT = 290;
+const DEFAULT_CANVAS_HEIGHT = 580;
+const DEFAULT_TITLE_SUBTITLE_GAP = 22;
 const DEFAULT_LABEL_COLUMN_GAP = 8;
 const DEFAULT_PARTY_LABEL_DISTANCE = 0;
 const DEFAULT_LABEL_DIAGONAL = {
@@ -138,6 +139,7 @@ const state = {
     transparent: true,
     width: DEFAULT_CANVAS_WIDTH,
     height: DEFAULT_CANVAS_HEIGHT,
+    titleSubtitleGap: DEFAULT_TITLE_SUBTITLE_GAP,
     labelOverlap: "diagonal",
     labelDensity: "balanced",
     labelColumnGap: DEFAULT_LABEL_COLUMN_GAP,
@@ -160,6 +162,7 @@ const els = {
   heightInput: document.querySelector("#heightInput"),
   titleFontSizeInput: document.querySelector("#titleFontSizeInput"),
   subtitleFontSizeInput: document.querySelector("#subtitleFontSizeInput"),
+  titleSubtitleGapInput: document.querySelector("#titleSubtitleGapInput"),
   numberFontSizeInput: document.querySelector("#numberFontSizeInput"),
   partyLabelFontSizeInput: document.querySelector("#partyLabelFontSizeInput"),
   labelOverlapSelect: document.querySelector("#labelOverlapSelect"),
@@ -705,6 +708,7 @@ function syncControls() {
   els.heightInput.value = state.options.height;
   els.titleFontSizeInput.value = state.options.fontSizes.title;
   els.subtitleFontSizeInput.value = state.options.fontSizes.subtitle;
+  els.titleSubtitleGapInput.value = state.options.titleSubtitleGap;
   els.numberFontSizeInput.value = state.options.fontSizes.numbers;
   els.partyLabelFontSizeInput.value = state.options.fontSizes.labels;
   els.labelOverlapSelect.value = state.options.labelOverlap;
@@ -807,6 +811,12 @@ function renderChart() {
   state.options.transparent = els.transparentToggle.checked;
   state.options.width = clamp(Number(els.widthInput.value) || DEFAULT_CANVAS_WIDTH, 420, 5000);
   state.options.height = clamp(Number(els.heightInput.value) || DEFAULT_CANVAS_HEIGHT, 240, 1400);
+  state.options.titleSubtitleGap = readNumberInput(
+    els.titleSubtitleGapInput,
+    DEFAULT_TITLE_SUBTITLE_GAP,
+    0,
+    220,
+  );
   state.options.fontSizes = {
     title: readFontSize(els.titleFontSizeInput, DEFAULT_FONT_SIZES.title, 12, 96),
     subtitle: readFontSize(els.subtitleFontSizeInput, DEFAULT_FONT_SIZES.subtitle, 10, 72),
@@ -857,7 +867,7 @@ function renderChart() {
   let valueFontSize = state.options.fontSizes.numbers;
   let labelFontSize = state.options.fontSizes.labels;
   let titleY = 24 * scale;
-  let subtitleY = titleY + 22 * scale;
+  let subtitleY = titleY + state.options.titleSubtitleGap * scale;
   let sidePadding = Math.max(16, 14 * scale);
   const labelSettings = getLabelDensitySettings(state.options.labelDensity);
   const diagonalGeometry = getDiagonalGeometry(state.options.labelDiagonal);
@@ -1178,12 +1188,14 @@ function resolveDiagonalLabelLayout(baseCenters, labelMetrics, minX, maxX, diago
   const diagonalMetrics = labelMetrics.map((metric) => ({
     width: metric.diagonalAnchorWidth + anchorSpacing,
   }));
-  const adjustedCenters = baseCenters.map(
-    (center, index) => center + (labelMetrics[index].labelDistance || DEFAULT_PARTY_LABEL_DISTANCE),
-  );
+  const resolvedCenters = resolveLabelCenters(baseCenters, diagonalMetrics, minX, maxX, 0);
+  const centers = resolvedCenters.map((center, index) => {
+    const distance = labelMetrics[index].labelDistance || DEFAULT_PARTY_LABEL_DISTANCE;
+    return clampLabelCenter(center + distance, minX, maxX, diagonalMetrics[index].width / 2);
+  });
 
   return {
-    centers: resolveLabelCenters(adjustedCenters, diagonalMetrics, minX, maxX, 0),
+    centers,
     lanes: new Array(baseCenters.length).fill(0),
     visible: new Array(baseCenters.length).fill(true),
     diagonal: true,
@@ -1617,6 +1629,7 @@ for (const input of [
   els.heightInput,
   els.titleFontSizeInput,
   els.subtitleFontSizeInput,
+  els.titleSubtitleGapInput,
   els.numberFontSizeInput,
   els.partyLabelFontSizeInput,
   els.labelColumnGapInput,
