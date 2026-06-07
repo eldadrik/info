@@ -163,6 +163,8 @@ const state = {
 };
 
 const els = {
+  advancedToggle: document.querySelector("#advancedToggle"),
+  advancedSettings: document.querySelector("#advancedSettings"),
   sampleButton: document.querySelector("#sampleButton"),
   fileInput: document.querySelector("#fileInput"),
   exportButton: document.querySelector("#exportButton"),
@@ -798,6 +800,7 @@ function renderPartyTable() {
     valueCell.append(valueInput);
 
     const labelDistanceCell = document.createElement("td");
+    labelDistanceCell.className = "advanced-only";
     const labelDistanceInput = document.createElement("input");
     labelDistanceInput.type = "number";
     labelDistanceInput.min = "-160";
@@ -810,6 +813,7 @@ function renderPartyTable() {
     labelDistanceCell.append(labelDistanceInput);
 
     const actionCell = document.createElement("td");
+    actionCell.className = "advanced-only";
     const removeButton = document.createElement("button");
     removeButton.type = "button";
     removeButton.className = "remove-row";
@@ -1490,6 +1494,13 @@ function setStatus(message, type = "") {
   els.status.className = `status ${type}`.trim();
 }
 
+function setAdvancedSettingsOpen(isOpen) {
+  els.advancedSettings.hidden = !isOpen;
+  els.advancedToggle.setAttribute("aria-expanded", String(isOpen));
+  els.advancedToggle.textContent = isOpen ? "סגור הגדרות מתקדמות" : "הגדרות מתקדמות";
+  document.body.classList.toggle("advanced-settings-open", isOpen);
+}
+
 async function handleFile(file) {
   try {
     setStatus("קורא קובץ...");
@@ -1620,6 +1631,10 @@ async function downloadPng() {
   }, "image/png");
 }
 
+els.advancedToggle.addEventListener("click", () => {
+  setAdvancedSettingsOpen(els.advancedSettings.hidden);
+});
+
 els.fileInput.addEventListener("change", (event) => {
   const [file] = event.target.files || [];
   if (file) {
@@ -1733,6 +1748,7 @@ els.addRowButton.addEventListener("click", () => {
 
 els.exportButton.addEventListener("click", downloadPng);
 
+setAdvancedSettingsOpen(false);
 syncControls();
 renderPartyTable();
 renderChart();

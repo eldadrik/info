@@ -60,6 +60,10 @@ button.primary:hover {
   border-color: var(--accent-strong);
 }
 
+[hidden] {
+  display: none !important;
+}
+
 .app-shell {
   width: min(1500px, calc(100vw - 32px));
   margin: 24px auto;
@@ -100,6 +104,10 @@ h2 {
   align-items: center;
   gap: 10px;
   flex-wrap: wrap;
+}
+
+.advanced-toggle {
+  flex: 0 0 auto;
 }
 
 .file-button {
@@ -161,12 +169,19 @@ h2 {
   padding: 20px;
 }
 
+.basic-fields {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 16px;
+}
+
 .field-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 12px;
 }
 
+.basic-fields label,
 .field-grid label,
 .font-control > label:not(.bold-toggle),
 .label-layout-grid label,
@@ -180,6 +195,7 @@ h2 {
   grid-column: 1 / -1;
 }
 
+.basic-fields span,
 .field-grid span,
 .font-grid span,
 .label-layout-grid span,
@@ -226,6 +242,30 @@ button:focus-visible {
   display: inline-flex;
   align-items: center;
   gap: 7px;
+}
+
+.advanced-settings {
+  margin-bottom: 16px;
+  padding-top: 16px;
+  border-top: 1px solid var(--line);
+}
+
+.advanced-settings .top-actions {
+  margin-bottom: 16px;
+}
+
+.advanced-only {
+  display: none;
+}
+
+.advanced-settings-open table .advanced-only {
+  display: table-cell;
+}
+
+.advanced-settings-open .table-title .advanced-only {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .table-title {

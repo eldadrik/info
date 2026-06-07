@@ -12,182 +12,197 @@
         <div>
           <h1 id="appTitle">יוצר גרף סקרי בחירות</h1>
         </div>
-        <div class="top-actions">
-          <button id="sampleButton" type="button">טען דוגמה</button>
-          <label class="file-button">
-            <input
-              id="fileInput"
-              type="file"
-              accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-            />
-            <span>בחר XLSX</span>
-          </label>
-          <button id="exportButton" class="primary" type="button">ייצוא PNG</button>
-        </div>
+        <button
+          id="advancedToggle"
+          class="advanced-toggle"
+          type="button"
+          aria-controls="advancedSettings"
+          aria-expanded="false"
+        >
+          הגדרות מתקדמות
+        </button>
       </section>
 
       <p id="status" class="status" role="status" aria-live="polite"></p>
 
       <section class="workspace">
         <aside class="controls" aria-label="הגדרות גרף">
-          <div class="field-grid">
-            <label>
-              <span>גליון</span>
-              <select id="sheetSelect"></select>
-            </label>
-            <label>
-              <span>כותרת</span>
-              <input id="titleInput" type="text" />
-            </label>
-            <label>
-              <span>שורת משנה</span>
-              <input id="subtitleInput" type="text" />
-            </label>
+          <div class="basic-fields">
             <label>
               <span>תאריך</span>
               <input id="dateInput" type="text" inputmode="decimal" />
             </label>
-            <label>
-              <span>רוחב PNG</span>
-              <input id="widthInput" type="number" min="420" max="5000" step="10" />
-            </label>
-            <label>
-              <span>גובה PNG</span>
-              <input id="heightInput" type="number" min="240" max="1400" step="10" />
-            </label>
           </div>
 
-          <div class="toggles" aria-label="אפשרויות">
-            <label>
-              <input id="sortToggle" type="checkbox" checked />
-              <span>מיין לפי מנדטים</span>
-            </label>
-            <label>
-              <input id="transparentToggle" type="checkbox" checked />
-              <span>רקע שקוף</span>
-            </label>
-          </div>
+          <div id="advancedSettings" class="advanced-settings" hidden>
+            <div class="top-actions">
+              <button id="sampleButton" type="button">טען דוגמה</button>
+              <label class="file-button">
+                <input
+                  id="fileInput"
+                  type="file"
+                  accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                />
+                <span>בחר XLSX</span>
+              </label>
+              <button id="exportButton" class="primary" type="button">ייצוא PNG</button>
+            </div>
 
-          <section class="font-section" aria-labelledby="fontSectionTitle">
-            <h2 id="fontSectionTitle">גדלי טקסט ומרווחים</h2>
-            <div class="font-grid">
-              <div class="font-control">
-                <label for="titleFontSizeInput">
-                  <span>כותרת ראשית</span>
-                  <input id="titleFontSizeInput" type="number" min="12" max="96" step="1" />
-                </label>
-                <label class="bold-toggle">
-                  <input id="titleBoldInput" type="checkbox" checked />
-                  <span>מודגש</span>
-                </label>
-              </div>
-              <div class="font-control">
-                <label for="subtitleFontSizeInput">
-                  <span>כותרת משנה</span>
-                  <input id="subtitleFontSizeInput" type="number" min="10" max="72" step="1" />
-                </label>
-                <label class="bold-toggle">
-                  <input id="subtitleBoldInput" type="checkbox" />
-                  <span>מודגש</span>
-                </label>
-              </div>
-              <div class="font-control spacing-control">
-                <label for="titleSubtitleGapInput">
-                  <span>מרווח בין כותרות</span>
-                  <input id="titleSubtitleGapInput" type="number" min="0" max="220" step="1" />
-                </label>
-              </div>
-              <div class="font-control">
-                <label for="numberFontSizeInput">
-                  <span>מספרי מנדטים</span>
-                  <input id="numberFontSizeInput" type="number" min="8" max="72" step="1" />
-                </label>
-                <label class="bold-toggle">
-                  <input id="numberBoldInput" type="checkbox" />
-                  <span>מודגש</span>
-                </label>
-              </div>
-              <div class="font-control">
-                <label for="partyLabelFontSizeInput">
-                  <span>שמות מפלגות</span>
-                  <input id="partyLabelFontSizeInput" type="number" min="8" max="64" step="1" />
-                </label>
-                <label class="bold-toggle">
-                  <input id="partyLabelBoldInput" type="checkbox" />
-                  <span>מודגש</span>
-                </label>
-              </div>
-            </div>
-          </section>
-          <section class="label-layout-section" aria-labelledby="labelLayoutTitle">
-            <h2 id="labelLayoutTitle">פריסת שמות מפלגות</h2>
-            <div class="label-layout-grid">
+            <div class="field-grid">
               <label>
-                <span>חפיפה</span>
-                <select id="labelOverlapSelect">
-                  <option value="auto">אוטומטי</option>
-                  <option value="stacked">מדורג</option>
-                  <option value="diagonal">אלכסוני</option>
-                  <option value="single">שורה אחת</option>
-                  <option value="hide">הסתר חופפים</option>
-                </select>
+                <span>גליון</span>
+                <select id="sheetSelect"></select>
               </label>
               <label>
-                <span>צפיפות</span>
-                <select id="labelDensitySelect">
-                  <option value="compact">צפופה</option>
-                  <option value="balanced" selected>מאוזנת</option>
-                  <option value="spacious">מרווחת</option>
-                </select>
+                <span>כותרת</span>
+                <input id="titleInput" type="text" />
               </label>
               <label>
-                <span>מרחק מהעמודות</span>
-                <input id="labelColumnGapInput" type="number" min="0" max="160" step="1" />
+                <span>שורת משנה</span>
+                <input id="subtitleInput" type="text" />
+              </label>
+              <label>
+                <span>רוחב PNG</span>
+                <input id="widthInput" type="number" min="420" max="5000" step="10" />
+              </label>
+              <label>
+                <span>גובה PNG</span>
+                <input id="heightInput" type="number" min="240" max="1400" step="10" />
               </label>
             </div>
-            <h3 class="subsection-title">אלכסון</h3>
-            <div class="diagonal-layout-grid">
+
+            <div class="toggles" aria-label="אפשרויות">
               <label>
-                <span>זווית °</span>
-                <input id="labelDiagonalAngleInput" type="number" min="15" max="75" step="1" />
-              </label>
-              <label>
-                <span>יישור</span>
-                <select id="labelDiagonalAlignSelect">
-                  <option value="right">ימין</option>
-                  <option value="center">מרכז</option>
-                  <option value="left">שמאל</option>
-                </select>
+                <input id="sortToggle" type="checkbox" checked />
+                <span>מיין לפי מנדטים</span>
               </label>
               <label>
-                <span>מרווח בסיסים</span>
-                <input id="labelDiagonalSpacingInput" type="number" min="0" max="80" step="1" />
-              </label>
-              <label>
-                <span>הזזה אופקית</span>
-                <input id="labelDiagonalOffsetXInput" type="number" min="-120" max="120" step="1" />
-              </label>
-              <label>
-                <span>הזזה אנכית</span>
-                <input id="labelDiagonalOffsetYInput" type="number" min="-80" max="120" step="1" />
-              </label>
-              <label>
-                <span>דירוג אנכי</span>
-                <input id="labelDiagonalStaggerInput" type="number" min="0" max="80" step="1" />
-              </label>
-              <label class="full-row-control">
-                <span>שטח שמור %</span>
-                <input id="labelDiagonalReserveInput" type="number" min="40" max="180" step="1" />
-              </label>
-              <label class="diagonal-toggle">
-                <input id="labelDiagonalBreakLinesInput" type="checkbox" />
-                <span>שבור שמות לשורות</span>
+                <input id="transparentToggle" type="checkbox" checked />
+                <span>רקע שקוף</span>
               </label>
             </div>
-          </section>
+
+            <section class="font-section" aria-labelledby="fontSectionTitle">
+              <h2 id="fontSectionTitle">גדלי טקסט ומרווחים</h2>
+              <div class="font-grid">
+                <div class="font-control">
+                  <label for="titleFontSizeInput">
+                    <span>כותרת ראשית</span>
+                    <input id="titleFontSizeInput" type="number" min="12" max="96" step="1" />
+                  </label>
+                  <label class="bold-toggle">
+                    <input id="titleBoldInput" type="checkbox" checked />
+                    <span>מודגש</span>
+                  </label>
+                </div>
+                <div class="font-control">
+                  <label for="subtitleFontSizeInput">
+                    <span>כותרת משנה</span>
+                    <input id="subtitleFontSizeInput" type="number" min="10" max="72" step="1" />
+                  </label>
+                  <label class="bold-toggle">
+                    <input id="subtitleBoldInput" type="checkbox" />
+                    <span>מודגש</span>
+                  </label>
+                </div>
+                <div class="font-control spacing-control">
+                  <label for="titleSubtitleGapInput">
+                    <span>מרווח בין כותרות</span>
+                    <input id="titleSubtitleGapInput" type="number" min="0" max="220" step="1" />
+                  </label>
+                </div>
+                <div class="font-control">
+                  <label for="numberFontSizeInput">
+                    <span>מספרי מנדטים</span>
+                    <input id="numberFontSizeInput" type="number" min="8" max="72" step="1" />
+                  </label>
+                  <label class="bold-toggle">
+                    <input id="numberBoldInput" type="checkbox" />
+                    <span>מודגש</span>
+                  </label>
+                </div>
+                <div class="font-control">
+                  <label for="partyLabelFontSizeInput">
+                    <span>שמות מפלגות</span>
+                    <input id="partyLabelFontSizeInput" type="number" min="8" max="64" step="1" />
+                  </label>
+                  <label class="bold-toggle">
+                    <input id="partyLabelBoldInput" type="checkbox" />
+                    <span>מודגש</span>
+                  </label>
+                </div>
+              </div>
+            </section>
+            <section class="label-layout-section" aria-labelledby="labelLayoutTitle">
+              <h2 id="labelLayoutTitle">פריסת שמות מפלגות</h2>
+              <div class="label-layout-grid">
+                <label>
+                  <span>חפיפה</span>
+                  <select id="labelOverlapSelect">
+                    <option value="auto">אוטומטי</option>
+                    <option value="stacked">מדורג</option>
+                    <option value="diagonal">אלכסוני</option>
+                    <option value="single">שורה אחת</option>
+                    <option value="hide">הסתר חופפים</option>
+                  </select>
+                </label>
+                <label>
+                  <span>צפיפות</span>
+                  <select id="labelDensitySelect">
+                    <option value="compact">צפופה</option>
+                    <option value="balanced" selected>מאוזנת</option>
+                    <option value="spacious">מרווחת</option>
+                  </select>
+                </label>
+                <label>
+                  <span>מרחק מהעמודות</span>
+                  <input id="labelColumnGapInput" type="number" min="0" max="160" step="1" />
+                </label>
+              </div>
+              <h3 class="subsection-title">אלכסון</h3>
+              <div class="diagonal-layout-grid">
+                <label>
+                  <span>זווית °</span>
+                  <input id="labelDiagonalAngleInput" type="number" min="15" max="75" step="1" />
+                </label>
+                <label>
+                  <span>יישור</span>
+                  <select id="labelDiagonalAlignSelect">
+                    <option value="right">ימין</option>
+                    <option value="center">מרכז</option>
+                    <option value="left">שמאל</option>
+                  </select>
+                </label>
+                <label>
+                  <span>מרווח בסיסים</span>
+                  <input id="labelDiagonalSpacingInput" type="number" min="0" max="80" step="1" />
+                </label>
+                <label>
+                  <span>הזזה אופקית</span>
+                  <input id="labelDiagonalOffsetXInput" type="number" min="-120" max="120" step="1" />
+                </label>
+                <label>
+                  <span>הזזה אנכית</span>
+                  <input id="labelDiagonalOffsetYInput" type="number" min="-80" max="120" step="1" />
+                </label>
+                <label>
+                  <span>דירוג אנכי</span>
+                  <input id="labelDiagonalStaggerInput" type="number" min="0" max="80" step="1" />
+                </label>
+                <label class="full-row-control">
+                  <span>שטח שמור %</span>
+                  <input id="labelDiagonalReserveInput" type="number" min="40" max="180" step="1" />
+                </label>
+                <label class="diagonal-toggle">
+                  <input id="labelDiagonalBreakLinesInput" type="checkbox" />
+                  <span>שבור שמות לשורות</span>
+                </label>
+              </div>
+            </section>
+          </div>
           <div class="table-title">
             <h2>מפלגות</h2>
-            <button id="addRowButton" type="button">הוסף שורה</button>
+            <button id="addRowButton" class="advanced-only" type="button">הוסף שורה</button>
           </div>
           <div class="table-shell">
             <table>
@@ -195,8 +210,8 @@
                 <tr>
                   <th scope="col">שם</th>
                   <th scope="col">מנדטים</th>
-                  <th scope="col">מרחק תג</th>
-                  <th scope="col"></th>
+                  <th class="advanced-only" scope="col">מרחק תג</th>
+                  <th class="advanced-only" scope="col"></th>
                 </tr>
               </thead>
               <tbody id="partyTable"></tbody>
