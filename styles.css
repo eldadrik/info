@@ -449,11 +449,17 @@ td:nth-child(3) input {
   min-height: 52px;
   display: flex;
   align-items: center;
+  gap: 12px;
   padding: 0 18px;
   border-bottom: 1px solid var(--line);
   color: var(--muted);
   font-size: 14px;
   font-weight: 700;
+}
+
+.preview-header #exportButton {
+  margin-inline-start: auto;
+  min-width: 160px;
 }
 
 .canvas-stage {
