@@ -60,6 +60,35 @@ button.primary:hover {
   border-color: var(--accent-strong);
 }
 
+.button-link {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--line-strong);
+  border-radius: 8px;
+  background: var(--surface);
+  color: var(--text);
+  padding: 0 16px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.button-link:hover {
+  border-color: var(--accent);
+}
+
+.button-link.primary {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #ffffff;
+}
+
+.button-link.primary:hover {
+  background: var(--accent-strong);
+  border-color: var(--accent-strong);
+}
+
 [hidden] {
   display: none !important;
 }
@@ -106,8 +135,22 @@ h2 {
   flex-wrap: wrap;
 }
 
+.topbar-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
 .advanced-toggle {
   flex: 0 0 auto;
+}
+
+.chart-link-button {
+  min-height: 48px;
+  padding-inline: 22px;
+  font-size: 16px;
 }
 
 .file-button {
@@ -445,6 +488,112 @@ td:nth-child(3) input {
   overflow: hidden;
 }
 
+.average-shell {
+  width: min(1500px, calc(100vw - 32px));
+}
+
+.average-workspace {
+  display: grid;
+  grid-template-columns: minmax(400px, 500px) minmax(0, 1fr);
+  gap: 18px;
+  align-items: start;
+}
+
+.average-controls {
+  min-width: 0;
+}
+
+.average-preview {
+  min-width: 0;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.average-preview-header {
+  min-height: 48px;
+  display: flex;
+  align-items: center;
+  padding: 0 18px;
+  border-bottom: 1px solid var(--line);
+  color: var(--muted);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.average-canvas-stage {
+  min-height: 720px;
+  place-items: start center;
+  align-items: start;
+}
+
+.average-settings-grid input[type="number"],
+.font-grid input[type="number"],
+.poll-name-grid input {
+  direction: ltr;
+  text-align: center;
+  font-weight: 700;
+}
+
+.poll-name-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  margin-top: 12px;
+}
+
+.poll-name-grid label {
+  display: grid;
+  gap: 6px;
+}
+
+.poll-name-grid span {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.poll-name-grid label:last-child {
+  grid-column: 1 / -1;
+}
+
+.average-table-shell {
+  max-height: 520px;
+}
+
+.average-table th,
+.average-table td {
+  padding: 6px;
+  font-size: 12px;
+}
+
+.average-table th:first-child,
+.average-table td:first-child {
+  width: 118px;
+}
+
+.average-table th:not(:first-child):not(:last-child),
+.average-table td:not(:first-child):not(:last-child) {
+  width: 54px;
+}
+
+.average-table th:last-child,
+.average-table td:last-child {
+  width: 36px;
+}
+
+.average-table td input {
+  height: 34px;
+  padding: 0 6px;
+}
+
+.average-table .poll-value input {
+  direction: ltr;
+  text-align: center;
+  font-weight: 700;
+}
+
 .preview-header {
   min-height: 52px;
   display: flex;
@@ -514,7 +663,8 @@ canvas {
   }
 
   .topbar,
-  .workspace {
+  .workspace,
+  .average-workspace {
     grid-template-columns: 1fr;
   }
 
@@ -527,8 +677,16 @@ canvas {
     justify-content: stretch;
   }
 
+  .topbar-actions {
+    justify-content: stretch;
+  }
+
   .top-actions > * {
     flex: 1 1 130px;
+  }
+
+  .topbar-actions > * {
+    flex: 1 1 180px;
   }
 
   .field-grid {
@@ -540,7 +698,8 @@ canvas {
   }
 
   .label-layout-grid,
-  .diagonal-layout-grid {
+  .diagonal-layout-grid,
+  .poll-name-grid {
     grid-template-columns: 1fr;
   }
 

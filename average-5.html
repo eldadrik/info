@@ -1,0 +1,217 @@
+<!doctype html>
+<html lang="he" dir="rtl">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>גרף 5 הסקרים האחרונים</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body class="average-page">
+    <main class="app-shell average-shell">
+      <section class="topbar" aria-labelledby="appTitle">
+        <div>
+          <h1 id="appTitle">גרף 5 הסקרים האחרונים</h1>
+        </div>
+        <div class="topbar-actions">
+          <a class="button-link" href="./index.html">חזרה לגרף הממוצע</a>
+          <button
+            id="advancedToggle"
+            class="advanced-toggle"
+            type="button"
+            aria-controls="advancedSettings"
+            aria-expanded="false"
+          >
+            הגדרות מתקדמות
+          </button>
+          <button id="exportButton" class="primary" type="button">ייצוא PNG</button>
+        </div>
+      </section>
+
+      <p id="status" class="status" role="status" aria-live="polite"></p>
+
+      <section class="average-workspace">
+        <aside class="controls average-controls" aria-label="הגדרות גרף">
+          <div class="basic-fields">
+            <label>
+              <span>כותרת</span>
+              <input id="titleInput" type="text" />
+            </label>
+            <label>
+              <span>שורת משנה</span>
+              <input id="subtitleInput" type="text" />
+            </label>
+            <label>
+              <span>תאריך</span>
+              <input id="dateInput" type="text" inputmode="decimal" />
+            </label>
+          </div>
+
+          <div id="advancedSettings" class="advanced-settings" hidden>
+            <div class="top-actions">
+              <button id="sampleButton" type="button">טען דוגמה</button>
+              <label class="file-button">
+                <input
+                  id="fileInput"
+                  type="file"
+                  accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                />
+                <span>בחר XLSX</span>
+              </label>
+            </div>
+
+            <div class="toggles" aria-label="אפשרויות">
+              <label>
+                <input id="sortToggle" type="checkbox" checked />
+                <span>מיין לפי ממוצע</span>
+              </label>
+              <label>
+                <input id="showZeroToggle" type="checkbox" checked />
+                <span>הצג מפלגות 0</span>
+              </label>
+            </div>
+
+            <section class="font-section" aria-labelledby="averageLayoutTitle">
+              <h2 id="averageLayoutTitle">מידות ופריסה</h2>
+              <div class="field-grid average-settings-grid">
+                <label>
+                  <span>ציר מקסימלי (0 אוטומטי)</span>
+                  <input id="axisMaxInput" type="number" min="0" max="120" step="5" />
+                </label>
+                <label>
+                  <span>רוחב אזור שמות</span>
+                  <input id="labelWidthInput" type="number" min="70" max="190" step="1" />
+                </label>
+                <label>
+                  <span>גובה פס</span>
+                  <input id="barHeightInput" type="number" min="4" max="20" step="1" />
+                </label>
+                <label>
+                  <span>רווח בין פסים</span>
+                  <input id="barGapInput" type="number" min="0" max="20" step="1" />
+                </label>
+                <label>
+                  <span>רווח בין מפלגות</span>
+                  <input id="groupGapInput" type="number" min="6" max="70" step="1" />
+                </label>
+                <label>
+                  <span>שוליים תחתונים</span>
+                  <input id="bottomPaddingInput" type="number" min="64" max="120" step="1" />
+                </label>
+              </div>
+            </section>
+
+            <section class="font-section" aria-labelledby="averageFontTitle">
+              <h2 id="averageFontTitle">גדלי טקסט</h2>
+              <div class="font-grid">
+                <div class="font-control">
+                  <label>
+                    <span>כותרת</span>
+                    <input id="titleFontSizeInput" type="number" min="12" max="44" step="1" />
+                  </label>
+                  <label class="bold-toggle">
+                    <input id="titleBoldInput" type="checkbox" checked />
+                    <span>מודגש</span>
+                  </label>
+                </div>
+                <div class="font-control">
+                  <label>
+                    <span>שורת משנה</span>
+                    <input id="subtitleFontSizeInput" type="number" min="10" max="34" step="1" />
+                  </label>
+                  <label class="bold-toggle">
+                    <input id="subtitleBoldInput" type="checkbox" />
+                    <span>מודגש</span>
+                  </label>
+                </div>
+                <div class="font-control">
+                  <label>
+                    <span>שמות מפלגות</span>
+                    <input id="partyLabelFontSizeInput" type="number" min="8" max="22" step="1" />
+                  </label>
+                  <label class="bold-toggle">
+                    <input id="partyLabelBoldInput" type="checkbox" />
+                    <span>מודגש</span>
+                  </label>
+                </div>
+                <div class="font-control">
+                  <label>
+                    <span>מספרים</span>
+                    <input id="valueFontSizeInput" type="number" min="8" max="22" step="1" />
+                  </label>
+                  <label class="bold-toggle">
+                    <input id="valueBoldInput" type="checkbox" checked />
+                    <span>מודגש</span>
+                  </label>
+                </div>
+                <div class="font-control spacing-control">
+                  <label class="bold-toggle">
+                    <input id="axisBoldInput" type="checkbox" />
+                    <span>ציר מודגש</span>
+                  </label>
+                </div>
+              </div>
+            </section>
+
+            <section class="font-section" aria-labelledby="pollNamesTitle">
+              <h2 id="pollNamesTitle">שמות הסקרים</h2>
+              <div class="poll-name-grid">
+                <label>
+                  <span>סקר 1</span>
+                  <input id="pollName0Input" data-poll-name="0" type="text" />
+                </label>
+                <label>
+                  <span>סקר 2</span>
+                  <input id="pollName1Input" data-poll-name="1" type="text" />
+                </label>
+                <label>
+                  <span>סקר 3</span>
+                  <input id="pollName2Input" data-poll-name="2" type="text" />
+                </label>
+                <label>
+                  <span>סקר 4</span>
+                  <input id="pollName3Input" data-poll-name="3" type="text" />
+                </label>
+                <label>
+                  <span>סקר 5</span>
+                  <input id="pollName4Input" data-poll-name="4" type="text" />
+                </label>
+              </div>
+            </section>
+
+            <div class="table-title">
+              <h2>מפלגות</h2>
+              <button id="addRowButton" type="button">הוסף שורה</button>
+            </div>
+            <div class="table-shell average-table-shell">
+              <table class="average-table">
+                <thead>
+                  <tr>
+                    <th scope="col">שם</th>
+                    <th id="pollHeader0" scope="col">1</th>
+                    <th id="pollHeader1" scope="col">2</th>
+                    <th id="pollHeader2" scope="col">3</th>
+                    <th id="pollHeader3" scope="col">4</th>
+                    <th id="pollHeader4" scope="col">5</th>
+                    <th scope="col"></th>
+                  </tr>
+                </thead>
+                <tbody id="partyTable"></tbody>
+              </table>
+            </div>
+          </div>
+        </aside>
+
+        <section class="average-preview" aria-label="תצוגה מקדימה">
+          <div class="average-preview-header">
+            <span id="summaryText"></span>
+          </div>
+          <div class="canvas-stage average-canvas-stage">
+            <canvas id="averageCanvas" width="550" height="760"></canvas>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <script src="./average-5.js" defer></script>
+  </body>
+</html>

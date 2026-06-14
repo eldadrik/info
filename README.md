@@ -9,9 +9,12 @@ The app runs entirely in the browser. It reads an `.xlsx` workbook, extracts par
 - `index.html` - Hebrew RTL app shell and form controls.
 - `styles.css` - responsive layout and editor styling.
 - `app.js` - XLSX parsing, data extraction, chart rendering, and PNG export.
+- `average-5.html` - separate page for the last-five-polls grouped horizontal chart.
+- `average-5.js` - XLSX extraction and canvas rendering for the last-five-polls chart.
 - `סקר הסקרים - 27.4.xlsx` - sample election-poll workbook.
 - `EXAMPLE.png` - reference infographic example.
 - `election-polls-27.4 (6).png` - exported output example.
+- `average_5_part_*.png` - reference images for the grouped horizontal chart.
 
 There is no build step and no package install. The app does not use a backend.
 
@@ -31,6 +34,12 @@ Then open:
 http://localhost:8000/
 ```
 
+The last-five-polls chart is available at:
+
+```text
+http://localhost:8000/average-5.html
+```
+
 ## Writer Workflow
 
 1. Load the sample workbook with `טען דוגמה`, or import a new workbook with `בחר XLSX`.
@@ -39,6 +48,8 @@ http://localhost:8000/
 4. Adjust PNG dimensions, sorting, transparent background, font sizes, headline spacing, bold settings, and party-label layout.
 5. Check the canvas preview.
 6. Export with `ייצוא PNG`.
+
+Use the header button for `5 הסקרים האחרונים` to open the grouped horizontal chart. It reads the `כל הסקרים` sheet and renders the rightmost five numeric poll columns. The average chart page includes basic title/date controls plus advanced controls for workbook loading, layout, font sizes, poll labels, and party values.
 
 The exported filename follows this pattern:
 
@@ -77,6 +88,7 @@ Rows whose names look like summaries are skipped, including coalition, oppositio
 - XLSX files are read client-side in `app.js` by parsing the ZIP container and internal XML files directly.
 - Deflated XLSX entries use the browser `DecompressionStream` API.
 - Chart output is rendered with the HTML canvas API.
+- The last-five-polls chart keeps a fixed 550px canvas width and calculates canvas height from the party count.
 - Hebrew labels are split by words and repositioned to reduce overlap, with an optional Excel-style diagonal mode for dense party names.
 - Diagonal party labels can be tuned by angle, alignment, anchor spacing, horizontal and vertical offsets, stagger, and reserved label area.
 - Diagonal party labels can optionally split each word onto its own rotated line to reduce the reserved label height for long names.
