@@ -2,7 +2,6 @@
 
 const SAMPLE_FILE_NAME = "סקר הסקרים - 27.4.xlsx";
 const CHART_WIDTH = 550;
-const CHART_BACKGROUND = "#fbf6ef";
 const TEXT_COLOR = "#231F20";
 const GRID_COLOR = "#dedede";
 const AXIS_COLOR = "#231F20";
@@ -11,20 +10,22 @@ const GRAPH_FONT_FAMILY =
   '"FbPracticaNarrow", "Fb Practica Narrow", "FbPractica Narrow", "FbPractica", "Fb Practica", "Heebo", Arial, "Noto Sans Hebrew", "Segoe UI", sans-serif';
 const BAR_COLORS = ["#2381be", "#3195d1", "#45ace4", "#7fc9ef", "#b6e1f8"];
 const POLL_COUNT = 5;
+const BAR_END_LABEL_RESERVE = 45;
 const DEFAULT_OPTIONS = {
   sort: true,
   showZeroParties: true,
   axisMax: 0,
-  labelWidth: 104,
+  labelWidth: 150,
   barHeight: 8,
-  barGap: 5,
-  groupGap: 29,
+  barGap: 6,
+  groupGap: 20,
   bottomPadding: 68,
   fontSizes: {
     title: 30,
     subtitle: 28,
     labels: 17,
     values: 16,
+    publishers: 10,
     axis: 12,
   },
   fontBold: {
@@ -32,6 +33,7 @@ const DEFAULT_OPTIONS = {
     subtitle: false,
     labels: false,
     values: true,
+    publishers: false,
     axis: false,
   },
 };
@@ -43,7 +45,7 @@ const fallbackState = {
     subtitle: "שפורסמו בכלי התקשורת",
     date: "27.4",
   },
-  pollNames: ["ערוץ 12", "ערוץ 13", "ערוץ 14", "מעריב/וואלה", "i24news"],
+  pollNames: ["חדשות 12", "חדשות 13", "עכשיו 14", "מעריב/וואלה", "i24news"],
   parties: [
     { name: "הליכוד", values: [25, 26, 34, 28, 33] },
     { name: "ביחד", values: [26, 26, 20, 27, 24] },
@@ -89,10 +91,12 @@ const els = {
   subtitleFontSizeInput: document.querySelector("#subtitleFontSizeInput"),
   partyLabelFontSizeInput: document.querySelector("#partyLabelFontSizeInput"),
   valueFontSizeInput: document.querySelector("#valueFontSizeInput"),
+  publisherFontSizeInput: document.querySelector("#publisherFontSizeInput"),
   titleBoldInput: document.querySelector("#titleBoldInput"),
   subtitleBoldInput: document.querySelector("#subtitleBoldInput"),
   partyLabelBoldInput: document.querySelector("#partyLabelBoldInput"),
   valueBoldInput: document.querySelector("#valueBoldInput"),
+  publisherBoldInput: document.querySelector("#publisherBoldInput"),
   axisBoldInput: document.querySelector("#axisBoldInput"),
   pollNameInputs: Array.from(document.querySelectorAll("[data-poll-name]")),
   pollHeaders: Array.from({ length: POLL_COUNT }, (_, index) => document.querySelector(`#pollHeader${index}`)),
@@ -356,7 +360,9 @@ function extractAverageFiveData(workbook) {
   const { sheet, header, numericColumns } = selected;
   const selectedColumns = numericColumns.slice(-5);
   const headerRow = sheet.rows[header.index] || [];
-  const pollNames = selectedColumns.map((column) => cleanText(headerRow[column]) || `סקר ${column + 1}`);
+  const pollNames = selectedColumns.map((column) =>
+    normalizePublisherName(cleanText(headerRow[column]) || `סקר ${column + 1}`),
+  );
   const parties = [];
 
   for (let rowIndex = header.index + 1; rowIndex < sheet.rows.length; rowIndex += 1) {
@@ -450,6 +456,20 @@ function average(values) {
   return values.reduce((sum, value) => sum + value, 0) / Math.max(1, values.length);
 }
 
+function normalizePublisherName(name) {
+  const normalized = cleanText(name);
+  if (/^ערוץ\s*12$/i.test(normalized)) {
+    return "חדשות 12";
+  }
+  if (/^ערוץ\s*13$/i.test(normalized)) {
+    return "חדשות 13";
+  }
+  if (/^ערוץ\s*14$/i.test(normalized)) {
+    return "עכשיו 14";
+  }
+  return normalized;
+}
+
 function syncControls() {
   els.titleInput.value = state.meta.title;
   els.subtitleInput.value = state.meta.subtitle;
@@ -466,10 +486,12 @@ function syncControls() {
   els.subtitleFontSizeInput.value = state.options.fontSizes.subtitle;
   els.partyLabelFontSizeInput.value = state.options.fontSizes.labels;
   els.valueFontSizeInput.value = state.options.fontSizes.values;
+  els.publisherFontSizeInput.value = state.options.fontSizes.publishers;
   els.titleBoldInput.checked = state.options.fontBold.title;
   els.subtitleBoldInput.checked = state.options.fontBold.subtitle;
   els.partyLabelBoldInput.checked = state.options.fontBold.labels;
   els.valueBoldInput.checked = state.options.fontBold.values;
+  els.publisherBoldInput.checked = state.options.fontBold.publishers;
   els.axisBoldInput.checked = state.options.fontBold.axis;
   syncPollNameInputs();
 }
@@ -499,6 +521,12 @@ function readControls() {
     subtitle: readNumberInput(els.subtitleFontSizeInput, DEFAULT_OPTIONS.fontSizes.subtitle, 10, 34),
     labels: readNumberInput(els.partyLabelFontSizeInput, DEFAULT_OPTIONS.fontSizes.labels, 8, 22),
     values: readNumberInput(els.valueFontSizeInput, DEFAULT_OPTIONS.fontSizes.values, 8, 22),
+    publishers: readNumberInput(
+      els.publisherFontSizeInput,
+      DEFAULT_OPTIONS.fontSizes.publishers,
+      8,
+      22,
+    ),
     axis: DEFAULT_OPTIONS.fontSizes.axis,
   };
   state.options.fontBold = {
@@ -506,6 +534,7 @@ function readControls() {
     subtitle: els.subtitleBoldInput.checked,
     labels: els.partyLabelBoldInput.checked,
     values: els.valueBoldInput.checked,
+    publishers: els.publisherBoldInput.checked,
     axis: els.axisBoldInput.checked,
   };
   state.pollNames = els.pollNameInputs.map((input, index) => cleanText(input.value) || `סקר ${index + 1}`);
@@ -603,7 +632,7 @@ function renderChart() {
   const labelWidth = state.options.labelWidth;
   const rightPadding = 10;
   const chartLeft = labelWidth;
-  const chartRight = CHART_WIDTH - rightPadding;
+  const chartRight = CHART_WIDTH - rightPadding - BAR_END_LABEL_RESERVE;
   const chartWidth = chartRight - chartLeft;
   const barHeight = state.options.barHeight;
   const barGap = state.options.barGap;
@@ -623,8 +652,6 @@ function renderChart() {
 
   const ctx = canvas.getContext("2d");
   ctx.clearRect(0, 0, CHART_WIDTH, height);
-  ctx.fillStyle = CHART_BACKGROUND;
-  ctx.fillRect(0, 0, CHART_WIDTH, height);
 
   ctx.direction = "rtl";
   ctx.textAlign = "center";
@@ -665,13 +692,14 @@ function renderChart() {
       roundedRect(ctx, chartLeft, y, width, barHeight, 3);
       ctx.fill();
 
-      if (value > 0) {
-        ctx.fillStyle = "#000000";
-        ctx.font = `${getFontWeight("values")} ${state.options.fontSizes.values}px ${GRAPH_FONT_FAMILY}`;
-        ctx.textAlign = "left";
-        ctx.textBaseline = "middle";
-        ctx.fillText(String(value), Math.min(chartLeft + width + 7, chartRight - 11), y + barHeight / 2);
-      }
+      drawBarEndLabel(
+        ctx,
+        value,
+        state.pollNames[pollIndex] || `סקר ${pollIndex + 1}`,
+        chartLeft + width + 7,
+        y + barHeight / 2,
+        CHART_WIDTH - rightPadding,
+      );
     });
   });
 
@@ -753,6 +781,39 @@ function drawFittedPartyName(ctx, text, x, y, maxWidth, startSize, weight) {
     size -= 1;
   }
   ctx.fillText(text, x, y);
+}
+
+function drawBarEndLabel(ctx, value, publisher, x, y, maxX) {
+  ctx.save();
+  ctx.textAlign = "left";
+  ctx.textBaseline = "middle";
+  ctx.direction = "ltr";
+  ctx.fillStyle = "#000000";
+  ctx.font = `${getFontWeight("values")} ${state.options.fontSizes.values}px ${GRAPH_FONT_FAMILY}`;
+
+  const valueText = String(value);
+  ctx.fillText(valueText, x, y);
+  const publisherX = x + ctx.measureText(valueText).width + 6;
+  const publisherText = formatPublisherLabel(publisher);
+  const maxPublisherWidth = Math.max(0, maxX - publisherX);
+  let publisherSize = state.options.fontSizes.publishers;
+
+  ctx.direction = "rtl";
+  ctx.fillStyle = TEXT_COLOR;
+  while (publisherSize > 8) {
+    ctx.font = `${getFontWeight("publishers")} ${publisherSize}px ${GRAPH_FONT_FAMILY}`;
+    if (ctx.measureText(publisherText).width <= maxPublisherWidth) {
+      break;
+    }
+    publisherSize -= 1;
+  }
+  ctx.fillText(publisherText, publisherX, y, maxPublisherWidth);
+  ctx.restore();
+}
+
+function formatPublisherLabel(publisher) {
+  const text = cleanText(publisher).replace(/^\((.*)\)$/, "$1").trim();
+  return `(${text})`;
 }
 
 function getFontWeight(key) {
@@ -907,6 +968,7 @@ for (const input of [
   els.subtitleFontSizeInput,
   els.partyLabelFontSizeInput,
   els.valueFontSizeInput,
+  els.publisherFontSizeInput,
 ]) {
   input.addEventListener("input", renderChart);
 }
@@ -918,6 +980,7 @@ for (const input of [
   els.subtitleBoldInput,
   els.partyLabelBoldInput,
   els.valueBoldInput,
+  els.publisherBoldInput,
   els.axisBoldInput,
 ]) {
   input.addEventListener("change", renderChart);

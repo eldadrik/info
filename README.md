@@ -49,7 +49,7 @@ http://localhost:8000/average-5.html
 5. Check the canvas preview.
 6. Export with `ייצוא PNG`.
 
-Use the header button for `5 הסקרים האחרונים` to open the grouped horizontal chart. It reads the `כל הסקרים` sheet and renders the rightmost five numeric poll columns. The average chart page includes basic title/date controls plus advanced controls for workbook loading, layout, font sizes, poll labels, and party values.
+Use the header button for `5 הסקרים האחרונים` to open the grouped horizontal chart. It reads the `כל הסקרים` sheet and renders the rightmost five numeric poll columns. Each bar is labeled with its mandate value and publishing media outlet. The average chart page includes basic title/date controls plus advanced controls for workbook loading, layout, font sizes, poll labels, and party values.
 
 The exported filename follows this pattern:
 
@@ -88,7 +88,7 @@ Rows whose names look like summaries are skipped, including coalition, oppositio
 - XLSX files are read client-side in `app.js` by parsing the ZIP container and internal XML files directly.
 - Deflated XLSX entries use the browser `DecompressionStream` API.
 - Chart output is rendered with the HTML canvas API.
-- The last-five-polls chart keeps a fixed 550px canvas width and calculates canvas height from the party count.
+- The last-five-polls chart keeps a fixed 550px canvas width, calculates canvas height from the party count, and exports with a transparent background.
 - Hebrew labels are split by words and repositioned to reduce overlap, with an optional Excel-style diagonal mode for dense party names.
 - Diagonal party labels can be tuned by angle, alignment, anchor spacing, horizontal and vertical offsets, stagger, and reserved label area.
 - Diagonal party labels can optionally split each word onto its own rotated line to reduce the reserved label height for long names.
