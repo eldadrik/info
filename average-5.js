@@ -32,7 +32,7 @@ const DEFAULT_OPTIONS = {
     title: true,
     subtitle: false,
     labels: false,
-    values: true,
+    values: false,
     publishers: false,
     axis: false,
   },
